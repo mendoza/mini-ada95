@@ -9,8 +9,8 @@
 
 //Tipos de datos
 digit=[0-9]
-letter = [a-zA-Z]|"_"
-Integer = {digit}+
+letter = [a-zA-Z]
+Integer = {digit}+ ("_"{digit}+)* {digit}+ | {digit}+
 Float = {digit}+"."{digit}+
 Boolean = "True" | "False"
 
@@ -26,7 +26,7 @@ abrirC = "<"
 cerrarC = ">"
 bracketA = "["
 bracketC = "]"
-EOL = [\r\n|\n]
+EOL = [\r|\n|\r\n]
 
 //Operadores
 assignment = ":="
@@ -34,18 +34,19 @@ equals = "="
 not = "/="
 and="and"
 or="or"
-OpeR = {not}|{equals}|"<"|">"|"<="|">="|{and}|{or}
-OpeA_exp = "**"
+OpeR = {not}|{equals}|"<"|">"|"<="|">="
+OpeA_exp = "**" 
 OpeA_sum = "+"|"-"
 OpeA_mult = "*"|"/"
 
-id = {letter}({digit}|{letter})*
+id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{digit}+{letter}*)* ({letter}+ | {digit}+ ) | {letter}+
 
 %{
     int errores = 0;
 %}
 
 %state COMMENT_LINE
+%state STRING
 
 %%
 
@@ -70,17 +71,16 @@ id = {letter}({digit}|{letter})*
     {Boolean}          { System.out.println("Boolean: "+yytext());}
     {Integer}           { System.out.println("Integer: "+yytext());}
     {Float}           { System.out.println("Float: "+yytext());}
-    {id}            { System.out.println("id: "+yytext());}
     {not}           { }
-    {and}           { }
-    {or}           { }
+    {and}           { System.out.println("AND: "+yytext());}
+    {or}           { System.out.println("OR: "+yytext());}
     
     {OpeR}          { System.out.println("operador relacional"); }
+    {id}            { System.out.println("id: "+yytext());}
 
     //operador aritmeticos
     {OpeA_sum}      { }
     {OpeA_mult}     { }
-    //{MOD}           { }
 
     //operador logico
     {assignment}    { }
@@ -96,6 +96,9 @@ id = {letter}({digit}|{letter})*
     {bracketC}      { }
     {punto}         { }
 
+    \\\"                {yybegin(STRING);}
+    
+
     "--"                {yybegin(COMMENT_LINE);}
     {espacio}       {}
     .               {System.out.println("Falla en lexico, char o variable no aceptada: " +yytext()+" Linea: "+(yyline + 1)+ ", Columna: "+(yycolumn+1));
@@ -104,6 +107,12 @@ id = {letter}({digit}|{letter})*
 
 <COMMENT_LINE>
 {
-    {EOL}        {yybegin(YYINITIAL);}
-    .           {}
+    {EOL}        {System.out.println(); yybegin(YYINITIAL);}
+    .           {System.out.print(yytext());}
+}
+
+<STRING>
+{
+    \\\"        {System.out.println(); yybegin(YYINITIAL);}
+    .           {System.out.print(yytext());}
 }
