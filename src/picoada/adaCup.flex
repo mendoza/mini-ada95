@@ -16,13 +16,19 @@ import java.util.LinkedList;
 
 %{
 
-    static int errores=0;
-
+    static int errors =0;
+    String Logs = "";
 
     String comment = "";
     String cadena = "";
 
+    public String getLogs(){
+        return this.Logs;
+    }
 
+    public void Log(String cadena){
+        this.Logs += cadena + "\n" ;
+    }
 %}
 
 //Tipos de datos
@@ -122,8 +128,8 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
 
     "--"                { yybegin(COMMENT_LINE); comment = "";}
     {espacio}       {}
-    .               {System.out.println("Falla en lexico, char o variable no aceptada: " +yytext()+" Linea: "+(yyline + 1)+ ", Columna: "+(yycolumn+1));
-							errores++;}
+    .               {Log("Falla en lexico, char o variable no aceptada: " +yytext()+" Linea: "+(yyline + 1)+ ", Columna: "+(yycolumn+1));
+							errors++;}
 }
 
 <COMMENT_LINE>

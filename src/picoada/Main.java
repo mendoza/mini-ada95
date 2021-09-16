@@ -653,23 +653,24 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void analizadorSintactico() throws IOException {
-        
+
         String codigo = editorCodigo.getText();
-        Sintax s = new Sintax(new picoada.LexerCup(new StringReader(codigo)));
+        LexerCup lexer = new picoada.LexerCup(new StringReader(codigo));
+        Sintax s = new Sintax(lexer);
+
         try {
-            Sintax.SintacticError = 0;
+            Sintax.errors = 0;
+            LexerCup.errors = 0;
             s.parse();
 
-            if (Sintax.SintacticError == 0) {
+            if (Sintax.errors == 0 && LexerCup.errors == 0) {
                 System.out.println("No encontró errores");
-//            System.out.println("Parse: " + s.parse());
-                consola.setText("Análisis sintáctico finalizado");
+                consola.setText("Análisis finalizado exitosamente");
                 consola.setForeground(new Color(25, 111, 61));
             } else {
-                System.out.println("Encontró 1 o más errores");
-                String sym = s.getS();
-                System.out.println("sym "+sym);
-                consola.setText(sym);
+                String syntaxLogs = s.getLogs();
+                String lexerLogs = lexer.getLogs();
+                consola.setText("Se encontraron " + LexerCup.errors + " errros lexicos\n" + lexerLogs + "Se encontraron " + Sintax.errors + " errros sintacticos\n" + syntaxLogs);
                 consola.setForeground(Color.red);
             }
 
@@ -686,7 +687,6 @@ public class Main extends javax.swing.JFrame {
             while (true) {
                 Tokens tokens = lexer.yylex();
                 if (tokens == null) {
-
                     analisisLexico.setText(resultado);
                     return;
                 }

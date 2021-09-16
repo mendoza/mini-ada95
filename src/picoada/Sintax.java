@@ -104,26 +104,26 @@ public class Sintax extends java_cup.runtime.lr_parser {
 
 
 
-    private String s;
-    public static int SintacticError =0;
+    private String Logs="";
+    public static int errors = 0;
     public static Node Arbol;
     public static Symbol found;
     public static LinkedList<String> Errores = new LinkedList<String>();
 
 
-    public String getS(){
-        return this.s;
+    public String getLogs(){
+        return this.Logs;
     }
 
     public void Log(String cadena){
-        this.s += cadena + "\n" ;
+        this.Logs += cadena + "\n" ;
     }
 
     public void syntax_error(Symbol s){ 
         Log("Error Sintáctico en la Columna " + (s.left) +
-        " linear "+s.right+ ". No se esperaba este componente: " +s.value+".");
+        " linea "+s.right+ ". No se esperaba este componente: " +s.value+".");
         
-        SintacticError++;
+        errors++;
 
         List expected =expected_token_ids();
         if(expected.size()!=0){
@@ -131,11 +131,8 @@ public class Sintax extends java_cup.runtime.lr_parser {
             Log("TOKEN ESPERADO..");
             for(int i=0;i<expected.size();i++){
                 id = (int) expected.get(i);
-                    if (i == expected.size() - 1) {
-                        Log(sym.terminalNames[id]);
-                    } else {
-                        Log(sym.terminalNames[id] + " | ");
-                    }
+                String suffix = i == expected.size() - 1?"":" | ";    
+                Log(sym.terminalNames[id]+suffix);
             }
         }
     } 
@@ -144,55 +141,9 @@ public class Sintax extends java_cup.runtime.lr_parser {
         Log("Error síntactico irrecuperable en la columna " + 
         (s.left)+ " linear "+s.right+". Componente " + s.value + 
         " no reconocido.");
-        Log("Sintaxis mal escrito,irrecuperable"); 
-}
-
-    public String tokenes_id(int id){
-
-        String[] tokens = {"procedure",
-        "Integer",
-        "string",
-        "begin",
-        "end",
-        "is",
-        "For",
-        "loop",
-        "While",
-        "TypeFloat",
-        "TypeInteger",
-        "TypeBoolean",
-        "If",
-        "then",
-        "elsif",
-        "Else",
-        "put",
-        "not",
-        "and",
-        "or",
-        "OperadorRelacional",
-        "Id",
-        "OperadorSuma",
-        "OperadorMultiplicacion",
-        "asignacion",
-        "DosPuntos",
-        "PuntoComa",
-        "AbrirParentesis",
-        "CerrarParentesis",
-        "AbrirCorchete",
-        "CerrarCorchete",
-        "coma",
-        "AbrirBracket",
-        "CerrarBracket",
-        "punto",
-        "comillas",
-        "EOL",
-        "comentario",
-        "ERROR"
-        };
-
-        return(tokens[id]);
+        // Log("Sintaxis mal escrito,irrecuperable"); 
     }
-  
+
 
 
 /** Cup generated class to encapsulate user supplied action code.*/
