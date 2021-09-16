@@ -8,24 +8,24 @@ import java.util.List;
 parser code
 {:
 
-    private String s;
+    private String Logs;
     public static int SintacticError =0;
     public static Node Arbol;
     public static Symbol found;
     public static LinkedList<String> Errores = new LinkedList<String>();
 
 
-    public String getS(){
-        return this.s;
+    public String getLogs(){
+        return this.Logs;
     }
 
     public void Log(String cadena){
-        this.s += cadena + "\n" ;
+        this.Logs += cadena + "\n" ;
     }
 
     public void syntax_error(Symbol s){ 
         Log("Error Sintáctico en la Columna " + (s.left) +
-        " linear "+s.right+ ". No se esperaba este componente: " +s.value+".");
+        " linea "+s.right+ ". No se esperaba este componente: " +s.value+".");
         
         SintacticError++;
 
@@ -35,11 +35,8 @@ parser code
             Log("TOKEN ESPERADO..");
             for(int i=0;i<expected.size();i++){
                 id = (int) expected.get(i);
-                    if (i == expected.size() - 1) {
-                        Log(sym.terminalNames[id]);
-                    } else {
-                        Log(sym.terminalNames[id] + " | ");
-                    }
+                String suffix = i == expected.size() - 1?"":" | ";    
+                Log(sym.terminalNames[id]+suffix);
             }
         }
     } 
@@ -48,55 +45,9 @@ parser code
         Log("Error síntactico irrecuperable en la columna " + 
         (s.left)+ " linear "+s.right+". Componente " + s.value + 
         " no reconocido.");
-        Log("Sintaxis mal escrito,irrecuperable"); 
-}
-
-    public String tokenes_id(int id){
-
-        String[] tokens = {"procedure",
-        "Integer",
-        "string",
-        "begin",
-        "end",
-        "is",
-        "For",
-        "loop",
-        "While",
-        "TypeFloat",
-        "TypeInteger",
-        "TypeBoolean",
-        "If",
-        "then",
-        "elsif",
-        "Else",
-        "put",
-        "not",
-        "and",
-        "or",
-        "OperadorRelacional",
-        "Id",
-        "OperadorSuma",
-        "OperadorMultiplicacion",
-        "asignacion",
-        "DosPuntos",
-        "PuntoComa",
-        "AbrirParentesis",
-        "CerrarParentesis",
-        "AbrirCorchete",
-        "CerrarCorchete",
-        "coma",
-        "AbrirBracket",
-        "CerrarBracket",
-        "punto",
-        "comillas",
-        "EOL",
-        "comentario",
-        "ERROR"
-        };
-
-        return(tokens[id]);
+        // Log("Sintaxis mal escrito,irrecuperable"); 
     }
-  
+
 :};
 
 terminal     
