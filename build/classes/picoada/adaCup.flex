@@ -58,10 +58,11 @@ EOL = [\r|\n|\r\n]
 //Operadores
 assignment = ":="
 equals = "="
-not = "/="
+diff = "/="
+not = "not"
 and="and"
 or="or"
-OpeR = {not}|{equals}|"<"|">"|"<="|">="
+OpeR = {not}|{equals}|"<"|">"|"<="|">="|{and}|{or}
 OpeA_exp = "**" 
 OpeA_sum = "+"|"-"
 OpeA_mult = "*"|"/"
@@ -92,17 +93,20 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "then"            { return new Symbol (sym.then, yycolumn, yyline, yytext()); }
     "elsif"         { return new Symbol (sym.elsif, yycolumn, yyline, yytext()); }
     "else"          { return new Symbol (sym.Else, yycolumn, yyline, yytext()); }
-    "put"          { return new Symbol (sym.put, yycolumn, yyline, yytext()); }
-    {Boolean}          { return new Symbol (sym.TypeBoolean, yycolumn, yyline, yytext()); }
+    "Put"          { return new Symbol (sym.Put, yycolumn, yyline, yytext()); }
+    "Put_Line"          { return new Symbol (sym.Put_Line, yycolumn, yyline, yytext()); }
+    "Get"          { return new Symbol(sym.Get,yycolumn,yyline,yytext());   }
+    {Boolean}          { return new Symbol (sym.Boolean, yycolumn, yyline, yytext()); }
     {Integer}           { return new Symbol (sym.Integer, yycolumn, yyline, yytext()); }
 
     {string}                {yybegin(STRING);}
     
 
-    {Float}           { return new Symbol (sym.TypeFloat, yycolumn, yyline, yytext());}
+    {Float}           { return new Symbol (sym.Float, yycolumn, yyline, yytext());}
     {not}           { return new Symbol (sym.not, yycolumn, yyline, yytext());}
     {and}           { return new Symbol (sym.and, yycolumn, yyline, yytext());}
     {or}           { return new Symbol (sym.or, yycolumn, yyline, yytext());}
+    {diff}           { return new Symbol (sym.diff, yycolumn, yyline, yytext());}
     
     {OpeR}          { return new Symbol (sym.OperadorRelacional, yycolumn, yyline, yytext()); }
     {id}            { return new Symbol (sym.Id, yycolumn, yyline, yytext()); }

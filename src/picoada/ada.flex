@@ -49,7 +49,8 @@ comillas = \\\"
 //Operadores
 assignment = ":="
 equals = "="
-not = "/="
+diff = "/="
+not = "not"
 and="and"
 or="or"
 OpeR = {not}|{equals}|"<"|">"|"<="|">="
@@ -86,18 +87,21 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "then"            { lexema = yytext(); return then;}
     "elsif"         { lexema = yytext(); return elsif;}
     "else"          { lexema = yytext(); return Else;}
-    "put"          { lexema = yytext(); return put;}
-    {Boolean}          { lexema = yytext(); return TypeBoolean;}
+    "Put"          { lexema = yytext(); return Put;}
+    "Put_Line"          { lexema = yytext(); return Put_Line;}
+    "Get"          { lexema = yytext(); return Get;}
+    {Boolean}          { lexema = yytext(); return Boolean;}
     {Integer}           { lexema = yytext(); return Integer;}
 
 
     {string}                 { yybegin(STRING);}
 
 
-    {Float}           { lexema = yytext(); return TypeFloat;}
+    {Float}           { lexema = yytext(); return Float;}
     {not}           { lexema = yytext(); return not;}
     {and}           { lexema = yytext(); return and;}
     {or}           { lexema = yytext(); return or;}
+    {diff}          {lexema = yytext(); return diff;}
     
     {OpeR}          { lexema = yytext(); return OperadorRelacional;}
     {id}            {lexema = yytext(); return Id;}
