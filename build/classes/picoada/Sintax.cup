@@ -76,6 +76,7 @@ terminal
     not,
     and,
     or,
+    in,
     diff,
     OperadorRelacional,
     Id,
@@ -134,7 +135,10 @@ non terminal
     BODY,
     PROPOSITION,
     PUT,
-    GET;
+    GET,
+    CICLOFOR,
+    CICLOLOOP;
+
 
 precedence left OperadorSuma;
 precedence left OperadorMultiplicacion;
@@ -380,7 +384,7 @@ ASIGNAREXPREION ::= Id:c asignacion NODE_EXPRESION:n PuntoComa
 :};
 
 //if
-IFSTATE::= If AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b end If PuntoComa
+IFSTATE::= If EXPRESION_BOOLEAN:e then BODY:b end If PuntoComa
 {:
     Node node=new Node("declaración if",parser.token);
     parser.token++;
@@ -391,7 +395,7 @@ IFSTATE::= If AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b e
     if (b!=null) node.addHijo((Node)b);
     RESULT=node;
 :}
-| If AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b ELSESTATE:el end If PuntoComa
+| If EXPRESION_BOOLEAN:e then BODY:b ELSESTATE:el end If PuntoComa
 {:
     Node node = new Node("declaración if",parser.token);
     parser.token++;
@@ -403,7 +407,7 @@ IFSTATE::= If AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b e
     node.addHijo((Node)el);
     RESULT=node;
 :}
-| If AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b ELSIFSTATE:el end If PuntoComa
+| If EXPRESION_BOOLEAN:e then BODY:b ELSIFSTATE:el end If PuntoComa
 {:
     Node node = new Node("declaración if",parser.token);
     parser.token++;
@@ -424,7 +428,18 @@ ELSESTATE::= Else BODY:b
     RESULT=node;
 :};
 
-ELSIFSTATE::= elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b ELSIFSTATE
+ELSIFSTATE::= elsif EXPRESION_BOOLEAN:e then BODY:b ELSIFSTATE:eif
+{:
+    Node node=new Node("declaración elsif",parser.token);
+    parser.token++;
+    Node ife= new Node("if",parser.token);
+    parser.token++;
+    node.addHijo(ife);
+    node.addHijo((Node)e);
+    if (b!=null) node.addHijo((Node)b);
+    node.addHijo((Node)eif);
+    RESULT=node;
+:} | elsif EXPRESION_BOOLEAN:e then BODY:b
 {:
     Node node=new Node("declaración elsif",parser.token);
     parser.token++;
@@ -434,17 +449,7 @@ ELSIFSTATE::= elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BO
     node.addHijo((Node)e);
     if (b!=null) node.addHijo((Node)b);
     RESULT=node;
-:} | elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b
-{:
-    Node node=new Node("declaración elsif",parser.token);
-    parser.token++;
-    Node ife= new Node("if",parser.token);
-    parser.token++;
-    node.addHijo(ife);
-    node.addHijo((Node)e);
-    if (b!=null) node.addHijo((Node)b);
-    RESULT=node;
-:} | elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BODY:b ELSESTATE:el
+:} | elsif EXPRESION_BOOLEAN:e then BODY:b ELSESTATE:el
 {:
     Node node = new Node("declaración elsif",parser.token);
     parser.token++;
@@ -455,6 +460,47 @@ ELSIFSTATE::= elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BO
     if (b!=null) node.addHijo((Node)b);
     node.addHijo((Node)el);
     RESULT=node;
+:};
+
+// LOOP
+CICLOLOOP ::= loop BODY:b end loop PuntoComa{:
+        Node ciclo = new Node("declaración ciclo loop",parser.token);
+        parser.token++;
+        ciclo.addHijo((Node)b);
+        RESULT=ciclo;
+:};
+
+// For
+CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop PuntoComa{:
+        Node ciclo = new Node("declaración ciclo for",parser.token);
+        parser.token++;
+
+        // Expresión
+        Node expr = new Node("expresión for",parser.token);
+        parser.token++;
+
+        Node id=new Node("id",parser.token);
+        parser.token++;
+        id.addHijo(ide.toString(),parser.token);
+        parser.token++;
+
+        Node num1=new Node("Integer",parser.token);
+        parser.token++;
+        num1.addHijo(""+l,parser.token);
+        parser.token++;
+
+        Node num2=new Node("Integer",parser.token);
+        parser.token++;
+        num2.addHijo(""+h,parser.token);
+        parser.token++;
+
+        expr.addHijo(id);
+        expr.addHijo(num1);
+        expr.addHijo(num2);
+        ciclo.addHijo(expr);
+        ciclo.addHijo((Node)b);
+
+        RESULT= ciclo;
 :};
 
 //BODY
@@ -491,6 +537,10 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
     node.addHijo((Node)b);
 
     RESULT= node;
+:} | CICLOFOR:cf {:
+    RESULT = (Node)cf;
+:} | CICLOLOOP:cl {:
+    RESULT = (Node)cl;
 :}
     | DECLARACION_SIMPLE:d
 {:
@@ -892,7 +942,23 @@ F_EXPRESION_BOOLEAN ::= Boolean:n
     parser.token++;
     node.addHijo(valor);
     RESULT = node;
-:}
+:} | Integer:n
+{:
+    Node node=new Node("Integer",parser.token);
+    parser.token++;
+    Node valor = new Node(""+n,parser.token);
+    parser.token++;
+    node.addHijo(valor);
+    RESULT = node;
+:} | Float:n
+{:
+    Node node=new Node("Float",parser.token);
+    parser.token++;
+    Node valor = new Node(""+n,parser.token);
+    parser.token++;
+    node.addHijo(valor);
+    RESULT = node;
+:} 
     | Id:n
 {:
     Node node=new Node("id",parser.token);

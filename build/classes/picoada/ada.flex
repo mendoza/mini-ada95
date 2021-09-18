@@ -90,6 +90,7 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "Put"          { lexema = yytext(); return Put;}
     "Put_Line"          { lexema = yytext(); return Put_Line;}
     "Get"          { lexema = yytext(); return Get;}
+    "in"          { lexema = yytext(); return in;}
     {Boolean}          { lexema = yytext(); return Boolean;}
     {Integer}           { lexema = yytext(); return Integer;}
 
