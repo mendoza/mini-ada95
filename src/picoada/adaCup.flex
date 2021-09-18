@@ -97,6 +97,10 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "Put_Line"          { return new Symbol (sym.Put_Line, yycolumn, yyline, yytext()); }
     "Get"          { return new Symbol(sym.Get,yycolumn,yyline,yytext());   }
     "in"          { return new Symbol(sym.in,yycolumn,yyline,yytext());   }
+    "when"          { return new Symbol(sym.When,yycolumn,yyline,yytext());   }
+    "exit"          { return new Symbol(sym.Exit,yycolumn,yyline,yytext());   }
+    "function"          { return new Symbol(sym.Function,yycolumn,yyline,yytext());   }
+    "return"          { return new Symbol(sym.Return,yycolumn,yyline,yytext());   }
     {Boolean}          { return new Symbol (sym.Boolean, yycolumn, yyline, yytext()); }
     {Integer}           { return new Symbol (sym.Integer, yycolumn, yyline, yytext()); }
 

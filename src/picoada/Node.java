@@ -108,7 +108,7 @@ public class Node {
     public void recorrido(Node root, int espacio) {
         if (!root.hijos.isEmpty()) {
             for (int i = 0; i < espacio; i++) {
-                System.out.print("----");
+                System.out.print("····");
             }
             System.out.println(root);
 
@@ -118,7 +118,7 @@ public class Node {
             }
         } else {
             for (int i = 0; i < espacio; i++) {
-                System.out.print("----");
+                System.out.print("····");
             }
             System.out.println(root);
         }

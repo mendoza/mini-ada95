@@ -89,6 +89,10 @@ terminal
     CerrarParentesis,
     AbrirCorchete,
     CerrarCorchete,
+    Function,
+    Return,
+    When,
+    Exit,
     coma,
     AbrirBracket,
     CerrarBracket,
@@ -541,18 +545,6 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
     RESULT = (Node)cf;
 :} | CICLOLOOP:cl {:
     RESULT = (Node)cl;
-:}
-    | DECLARACION_SIMPLE:d
-{:
-    RESULT = (Node)d;
-:}
-    | DECLARACION_ASIGNACION:da
-{:
-    RESULT = (Node)da;
-:}
-    | DECLARACION_EXPRESION:da
-{:
-    RESULT = (Node)da;
 :}
     | ASIGNACION:a
 {:

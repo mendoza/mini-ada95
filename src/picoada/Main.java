@@ -701,6 +701,10 @@ public class Main extends javax.swing.JFrame {
                     case begin:
                     case end:
                     case is:
+                    case Exit:
+                    case When:
+                    case Function:
+                    case Return:
                     case For:
                     case loop:
                     case While:

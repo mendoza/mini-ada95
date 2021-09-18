@@ -30,6 +30,7 @@ string = {comillas}+ {id} {comillas}+
 Float = {digit}+"."{digit}+
 Boolean = "True" | "False"
 
+
 //Caracteres especiales
 espacio  = [ \n\r\t]+
 comma = ","
@@ -91,6 +92,10 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "Put_Line"          { lexema = yytext(); return Put_Line;}
     "Get"          { lexema = yytext(); return Get;}
     "in"          { lexema = yytext(); return in;}
+    "exit"          { lexema = yytext(); return Exit;}
+    "when"          { lexema = yytext(); return When;}
+    "function"          { lexema = yytext(); return Function;}
+    "return"          { lexema = yytext(); return Return;}
     {Boolean}          { lexema = yytext(); return Boolean;}
     {Integer}           { lexema = yytext(); return Integer;}
 

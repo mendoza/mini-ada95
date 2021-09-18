@@ -16,7 +16,7 @@ public class sym {
   public static final int If = 16;
   public static final int Id = 29;
   public static final int TypeFloat = 11;
-  public static final int coma = 39;
+  public static final int coma = 43;
   public static final int Else = 19;
   public static final int OperadorRelacional = 28;
   public static final int string = 5;
@@ -25,37 +25,41 @@ public class sym {
   public static final int Put = 20;
   public static final int TypeBoolean = 14;
   public static final int end = 4;
+  public static final int Return = 40;
   public static final int While = 9;
-  public static final int EOL = 45;
+  public static final int EOL = 49;
   public static final int Float = 12;
   public static final int then = 17;
   public static final int For = 7;
   public static final int EOF = 0;
   public static final int Put_Line = 21;
-  public static final int comillas = 43;
+  public static final int comillas = 47;
   public static final int DosPuntos = 33;
+  public static final int Function = 39;
   public static final int is = 6;
   public static final int error = 1;
   public static final int diff = 27;
+  public static final int When = 41;
   public static final int in = 26;
   public static final int or = 25;
   public static final int Integer = 10;
-  public static final int CerrarBracket = 41;
+  public static final int CerrarBracket = 45;
   public static final int Get = 22;
   public static final int procedure = 2;
-  public static final int punto = 42;
-  public static final int ERROR = 47;
-  public static final int AbrirBracket = 40;
+  public static final int punto = 46;
+  public static final int ERROR = 51;
+  public static final int AbrirBracket = 44;
   public static final int and = 24;
   public static final int not = 23;
-  public static final int ContString = 44;
-  public static final int comentario = 46;
+  public static final int ContString = 48;
+  public static final int comentario = 50;
   public static final int AbrirCorchete = 37;
   public static final int OperadorSuma = 30;
   public static final int Boolean = 15;
   public static final int CerrarCorchete = 38;
   public static final int OperadorMultiplicacion = 31;
   public static final int asignacion = 32;
+  public static final int Exit = 42;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
@@ -96,6 +100,10 @@ public class sym {
   "CerrarParentesis",
   "AbrirCorchete",
   "CerrarCorchete",
+  "Function",
+  "Return",
+  "When",
+  "Exit",
   "coma",
   "AbrirBracket",
   "CerrarBracket",
