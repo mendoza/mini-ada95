@@ -25,6 +25,7 @@ public enum Tokens {
     not,
     and,
     or,
+    in,
     diff,
     OperadorRelacional,
     Id,

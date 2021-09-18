@@ -76,6 +76,7 @@ terminal
     not,
     and,
     or,
+    in,
     diff,
     OperadorRelacional,
     Id,
@@ -134,7 +135,10 @@ non terminal
     BODY,
     PROPOSITION,
     PUT,
-    GET;
+    GET,
+    CICLOFOR,
+    CICLOLOOP;
+
 
 precedence left OperadorSuma;
 precedence left OperadorMultiplicacion;
@@ -456,6 +460,46 @@ ELSIFSTATE::= elsif AbrirParentesis EXPRESION_BOOLEAN:e CerrarParentesis then BO
     node.addHijo((Node)el);
     RESULT=node;
 :};
+// LOOP
+CICLOLOOP ::= loop BODY:b end loop PuntoComa{:
+        Node ciclo = new Node("declaración ciclo loop",parser.token);
+        parser.token++;
+        ciclo.addHijo((Node)b);
+        RESULT=ciclo;
+:};
+
+// For
+CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop PuntoComa{:
+        Node ciclo = new Node("declaración ciclo for",parser.token);
+        parser.token++;
+
+        // Expresión
+        Node expr = new Node("expresión for",parser.token);
+        parser.token++;
+
+        Node id=new Node("id",parser.token);
+        parser.token++;
+        id.addHijo(ide.toString(),parser.token);
+        parser.token++;
+
+        Node num1=new Node("Integer",parser.token);
+        parser.token++;
+        num1.addHijo(""+l,parser.token);
+        parser.token++;
+
+        Node num2=new Node("Integer",parser.token);
+        parser.token++;
+        num2.addHijo(""+h,parser.token);
+        parser.token++;
+
+        expr.addHijo(id);
+        expr.addHijo(num1);
+        expr.addHijo(num2);
+        ciclo.addHijo(expr);
+        ciclo.addHijo((Node)b);
+
+        RESULT= ciclo;
+:};
 
 //BODY
 BODY::= PROPOSITION:p BODY:b  {:
@@ -491,6 +535,10 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
     node.addHijo((Node)b);
 
     RESULT= node;
+:} | CICLOFOR:cf {:
+    RESULT = (Node)cf;
+:} | CICLOLOOP:cl {:
+    RESULT = (Node)cl;
 :}
     | DECLARACION_SIMPLE:d
 {:

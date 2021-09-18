@@ -393,7 +393,7 @@ public class Main extends javax.swing.JFrame {
 
         editorCodigo.setColumns(20);
         editorCodigo.setRows(5);
-        editorCodigo.setTabSize(4);
+        editorCodigo.setTabSize(2);
         editorCodigo.setBorder(null);
         jScrollPane1.setViewportView(editorCodigo);
 
@@ -720,6 +720,7 @@ public class Main extends javax.swing.JFrame {
                     case diff:
                     case and:
                     case or:
+                    case in:
                     case OperadorRelacional:
                     case Id:
                     case OperadorSuma:

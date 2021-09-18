@@ -96,6 +96,7 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "Put"          { return new Symbol (sym.Put, yycolumn, yyline, yytext()); }
     "Put_Line"          { return new Symbol (sym.Put_Line, yycolumn, yyline, yytext()); }
     "Get"          { return new Symbol(sym.Get,yycolumn,yyline,yytext());   }
+    "in"          { return new Symbol(sym.in,yycolumn,yyline,yytext());   }
     {Boolean}          { return new Symbol (sym.Boolean, yycolumn, yyline, yytext()); }
     {Integer}           { return new Symbol (sym.Integer, yycolumn, yyline, yytext()); }
 
