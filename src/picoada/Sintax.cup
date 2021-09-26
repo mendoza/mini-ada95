@@ -25,8 +25,11 @@ parser code
     }
 
     public void syntax_error(Symbol s){ 
-        Log("Error Sintáctico en la Columna " + (s.left) +
-        " linea "+s.right+ ". No se esperaba este componente: " +s.value+".");
+        Log("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
+        " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
+
+        System.out.println("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
+        " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
         
         errors++;
 
@@ -43,8 +46,12 @@ parser code
     } 
 
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
-        Log("Error síntactico irrecuperable en la columna " + 
-        (s.left)+ " linear "+s.right+". Componente " + s.value + 
+        Log("Error síntactico IRRECUPERABLE en la columna " + 
+        (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
+        " no reconocido.");
+
+        System.out.println("Error síntactico IRRECUPERABLE en la columna " + 
+        (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido.");
         // Log("Sintaxis mal escrito,irrecuperable"); 
     }
@@ -77,6 +84,7 @@ terminal
     and,
     or,
     in,
+    out,
     diff,
     OperadorRelacional,
     Id,
@@ -140,9 +148,20 @@ non terminal
     PROPOSITION,
     PUT,
     GET,
+    FUNC,
+    TIPO,
+    LLAMADA_F,
+    PARAMETROS,
+    PARAMETRO,
+    MULT_IDS,
     CICLOFOR,
+    RETORNO,
     CICLOLOOP;
 
+
+// ----------------------------------------
+// PRECEDENCIA DE OPERADORES
+// ----------------------------------------
 
 precedence left OperadorSuma;
 precedence left OperadorMultiplicacion;
@@ -151,7 +170,10 @@ precedence left or;
 
 start with INICIO;
 
-// INICIO me lleva a PROGRAMA para poder añadir el root del arbol
+// ----------------------------------------
+// INCIO DE LAS GRAMATICAS 
+// ----------------------------------------
+
 INICIO ::= PROCEDURE: b
 {:
     Node start = new Node("Start",token);
@@ -163,7 +185,10 @@ INICIO ::= PROCEDURE: b
 :}
 ;
 
-// Comienza el analisis Sintáctico
+// ----------------------------------------
+// DECLARACION DE UN PROCEDURE COMO ADA95 COMIENZA
+// ----------------------------------------
+
 PROCEDURE ::= procedure Id is GLOBAL_START:b begin BODY:bs end Id PuntoComa
 {:
     Node node = new Node();
@@ -171,10 +196,143 @@ PROCEDURE ::= procedure Id is GLOBAL_START:b begin BODY:bs end Id PuntoComa
     node.addHijo((Node)bs);
     RESULT=node;
 :}
+|error PuntoComa
 ;
 
 
-DECLARACION_SIMPLE ::= Id:i DosPuntos TYPE:t PuntoComa
+// ----------------------------------------
+// FUNCIONES
+// ----------------------------------------
+
+
+// ----------------------------------------
+// CREACION DE UNA FUNCION  
+// ----------------------------------------
+
+FUNC ::= Function Id:i AbrirParentesis PARAMETROS:ptros CerrarParentesis Return TYPE:t is GLOBAL_START:b begin BODY:bs end Id PuntoComa
+{:
+    System.out.println("Declaracion de funciones");
+    
+    Node node = new Node("Declaracion de funcion", parser.token);
+    parser.token++;
+
+    Node id = new Node("Nombre de funcion", parser.token);
+    parser.token++;
+
+    id.addHijo(i.toString(), parser.token);
+    parser.token++;
+
+    node.addHijo(id);
+    node.addHijo((Node)b);
+    node.addHijo((Node)bs);
+    node.addHijo((Node)t);
+    node.addHijo((Node)ptros);
+    RESULT=node;
+:}
+// | error PuntoComa FUNC
+;
+
+// ----------------------------------------
+// LLAMADA A FUNCIONES CON O SIN PARAMETROS 
+// ----------------------------------------
+
+LLAMADA_F ::= Id:i AbrirParentesis MULT_IDS:ide CerrarParentesis
+{:
+    Node node = new Node ("Invocacion de la funcion con parametros", parser.token);
+    parser.token++;
+
+    Node id = new Node(i.toString(), parser.token);
+    parser.token++;
+    
+    node.addHijo(id);
+
+    node.addHijos(((Node)ide).getHijos());
+
+    RESULT = node;
+:}
+| Id:i AbrirParentesis CerrarParentesis 
+{:
+    Node node = new Node ("Invocacion de la funcion sin parametros", parser.token);
+    parser.token++;
+
+    Node id = new Node(i.toString(), parser.token);
+    parser.token++;
+    
+    node.addHijo(id);
+
+    RESULT = node;
+:}
+|error PuntoComa 
+;
+
+// ----------------------------------------
+// PARAMETROS DE FUNCIONES 
+// ----------------------------------------
+
+// ----------------------------------------
+// DECLARACION DE PARAMETROS DE UNA FUNCION  
+// ----------------------------------------
+
+PARAMETRO::= MULT_IDS:ide DosPuntos TIPO:tpo TYPE:t
+{:
+
+    Node node = new Node("Parametro", parser.token);
+    parser.token++;
+
+    // Asigno el TYPE
+    node.addHijo((Node)t);
+
+    // Asigno MULT_IDS
+    node.addHijos(((Node)ide).getHijos());
+
+    parser.token++;
+
+    // Asigno el TIPO
+    node.addHijo((Node)tpo);
+    
+
+    RESULT = node;
+
+:}
+| {::}
+;
+
+// -------------------------------------------------
+// DECLARACION UNO O MAS PARAMETROS PARA LA FUNCION
+// -------------------------------------------------
+
+PARAMETROS ::= PARAMETRO:ptro
+{:
+
+   RESULT = ((Node)ptro);
+
+:}
+| PARAMETRO:ptro PuntoComa PARAMETROS:ptros  
+{:
+
+    Node decl = new Node("Declaracion de parametros" ,parser.token);
+    parser.token++;
+
+
+    decl.addHijo((Node)ptro);
+
+
+    decl.addHijos(((Node)ptros).getHijos());
+
+
+    RESULT = decl;
+:}
+| error
+;
+
+// ----------------------------------------
+// DELCARACION DE VARIABLES 
+// ----------------------------------------
+
+// ----------------------------------------
+// DECLARACION SIMPLE 
+// ----------------------------------------
+DECLARACION_SIMPLE ::= MULT_IDS:i DosPuntos TYPE:t PuntoComa
 {:
         System.out.println("Declaración simple");
         // Declaro el nodo declaración de variables
@@ -184,20 +342,56 @@ DECLARACION_SIMPLE ::= Id:i DosPuntos TYPE:t PuntoComa
         decl.addHijo((Node)t);
         
         // Asigno el id
+        
+        decl.addHijos(((Node)i).getHijos());
+
         parser.token++;
+
+        RESULT = decl;
+:}
+;
+
+DECLARACION_EXPRESION ::= MULT_IDS:ide DosPuntos TYPE:t asignacion NODE_EXPRESION:n PuntoComa
+{:
+        Node decl = new Node("declaracion y asignacion expresión",  parser.token);
+     
+        parser.token++;
+        // Asigno el tipo
+        decl.addHijo((Node)t);
+        // Asigno el id
         Node id=new Node("id",parser.token);
-
         parser.token++;
-        id.addHijo(i.toString(),parser.token);
-
+        decl.addHijos(((Node)ide).getHijos());
         parser.token++;
-        decl.addHijo(id);
+        
+        // Asigno el valor
+        // Aquí valido si solo se le asigna un id o un número
+        Node temp = (Node)n;
+        if (temp.getHijos().size() == 3){
+            String id1, id2, num;
+            num = temp.getHijo(0).getValor();
+            id1 = temp.getHijo(1).getValor();
+            id2 = temp.getHijo(2).getValor();
+            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
+                Node newNode = new Node("valor",temp.getID());
+                newNode.addHijo(temp.getHijo(0));
+                decl.addHijo(newNode);
+                decl.setValor("declaracion y asignacion");
+            }else if (id1.equals("#") && id2.equals("#") && num.equals("id")){
+                decl.addHijo(temp.getHijo(0));
+                decl.setValor("declaracion y asignacion");
+            }else{
+                decl.addHijo((Node)n);
+            }
+        }else{
+            decl.addHijo((Node)n);
+        }
 
         RESULT = decl;
 :};
 
-// ==== Declaraciones y asignaciones sin expresión
-DECLARACION_ASIGNACION ::=  Id:ide DosPuntos TYPE:t asignacion Boolean:b PuntoComa
+
+DECLARACION_ASIGNACION ::=  MULT_IDS:ide DosPuntos TYPE:t asignacion Boolean:b PuntoComa
 {:
         Node decl = new Node("declaracion y asignacion",  parser.token);
 
@@ -209,9 +403,8 @@ DECLARACION_ASIGNACION ::=  Id:ide DosPuntos TYPE:t asignacion Boolean:b PuntoCo
         Node id=new Node("id",parser.token);
 
         parser.token++;
-        id.addHijo(ide.toString(),parser.token);
 
-        decl.addHijo(id);
+        decl.addHijos(((Node)ide).getHijos());
 
         // Asigno el valor
         parser.token++;
@@ -229,32 +422,80 @@ DECLARACION_ASIGNACION ::=  Id:ide DosPuntos TYPE:t asignacion Boolean:b PuntoCo
         decl.addHijo(value);
 
         RESULT = decl;
-:};
+:}
   
-/*    |  VAR:v type:t ID:ide ASSIGNMENT llamadaFunc:f PUNTOC
+|   MULT_IDS:ide DosPuntos TYPE:t asignacion LLAMADA_F:f PuntoComa
 {:
-        Node decl = new Node("declaracion y asignacion",  parser.token);
+        Node decl = new Node("declaracion y asignacion por funcion",  parser.token);
         parser.token++;
-        // Asigno var
-        Node variable=new Node(v.toString(),parser.token);
-        parser.token++;
-        decl.addHijo(variable);
-        parser.token++;
+
         // Asigno el tipo
         decl.addHijo((Node)t);
+
         // Asigno el id
         Node id=new Node("id",parser.token);
         parser.token++;
+
         id.addHijo(new Node(ide.toString(),parser.token));
-        decl.addHijo(id);
+
+        decl.addHijos(((Node)ide).getHijos());
         parser.token++;
+
         // Asigno el valor
         decl.addHijo((Node)f);
 
         RESULT = decl;
-:};
-*/
+:}
+;
 
+// ----------------------------------------
+// DECLARACION DE MULTIPLES IDS  
+// ----------------------------------------
+
+MULT_IDS ::= Id:ids
+{:
+    Node decl = new Node("Declaracion" ,parser.token);
+    parser.token++;
+
+    Node id=new Node("id",parser.token);
+    parser.token++;
+
+    decl.addHijo(id);
+
+
+    id.addHijo(new Node(ids.toString(),parser.token));
+    parser.token++;
+
+    RESULT = decl;
+
+
+:}
+| Id:ide coma MULT_IDS:ids  
+{:
+
+    Node decl = new Node("Declaracion" ,parser.token);
+    parser.token++;
+
+    Node id=new Node("id",parser.token);
+    parser.token++;
+
+
+    id.addHijo(new Node(ide.toString(),parser.token));
+    parser.token++;
+
+    decl.addHijo(id);
+
+
+    decl.addHijos(((Node)ids).getHijos());
+
+
+    RESULT = decl;
+:}
+;
+
+// ----------------------------------------
+// ASIGNACIONES Y MODIFICACION DE VARIABLES  
+// ----------------------------------------
 ASIGNACION ::=  Id:ide asignacion Boolean:b PuntoComa
 {:
         Node decl = new Node("asignacion",  parser.token);
@@ -284,71 +525,29 @@ ASIGNACION ::=  Id:ide asignacion Boolean:b PuntoComa
         decl.addHijo(value);
 
         RESULT = decl;
-:};
+:}
   
-/*    |  VAR:v type:t ID:ide ASSIGNMENT llamadaFunc:f PUNTOC
+// a = Sr(); 
+
+|  Id:ide asignacion LLAMADA_F:f PuntoComa
 {:
-        Node decl = new Node("declaracion y asignacion",  parser.token);
+        Node decl = new Node("declaracion y asignacion por llamada a funcion",  parser.token);
         parser.token++;
-        // Asigno var
-        Node variable=new Node(v.toString(),parser.token);
-        parser.token++;
-        decl.addHijo(variable);
-        parser.token++;
-        // Asigno el tipo
-        decl.addHijo((Node)t);
+
         // Asigno el id
         Node id=new Node("id",parser.token);
         parser.token++;
         id.addHijo(new Node(ide.toString(),parser.token));
         decl.addHijo(id);
         parser.token++;
+
         // Asigno el valor
         decl.addHijo((Node)f);
 
         RESULT = decl;
-:};
-*/
+:}
+;
 
-DECLARACION_EXPRESION ::= Id:ide DosPuntos TYPE:t asignacion NODE_EXPRESION:n PuntoComa
-{:
-        Node decl = new Node("declaracion y asignacion expresión",  parser.token);
-     
-        parser.token++;
-        // Asigno el tipo
-        decl.addHijo((Node)t);
-        // Asigno el id
-        Node id=new Node("id",parser.token);
-        parser.token++;
-        id.addHijo(new Node(ide.toString(),parser.token));
-        decl.addHijo(id);
-        parser.token++;
-        
-        // Asigno el valor
-        // Aquí valido si solo se le asigna un id o un número
-        Node temp = (Node)n;
-        if (temp.getHijos().size() == 3){
-            String id1, id2, num;
-            num = temp.getHijo(0).getValor();
-            id1 = temp.getHijo(1).getValor();
-            id2 = temp.getHijo(2).getValor();
-            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
-                Node newNode = new Node("valor",temp.getID());
-                newNode.addHijo(temp.getHijo(0));
-                decl.addHijo(newNode);
-                decl.setValor("declaracion y asignacion");
-            }else if (id1.equals("#") && id2.equals("#") && num.equals("id")){
-                decl.addHijo(temp.getHijo(0));
-                decl.setValor("declaracion y asignacion");
-            }else{
-                decl.addHijo((Node)n);
-            }
-        }else{
-            decl.addHijo((Node)n);
-        }
-
-        RESULT = decl;
-:};
 
 ASIGNAREXPREION ::= Id:c asignacion NODE_EXPRESION:n PuntoComa
 {:
@@ -387,7 +586,10 @@ ASIGNAREXPREION ::= Id:c asignacion NODE_EXPRESION:n PuntoComa
         RESULT = decl;
 :};
 
-//if
+// ----------------------------------------
+// BLOQUE IF  
+// ----------------------------------------
+
 IFSTATE::= If EXPRESION_BOOLEAN:e then BODY:b end If PuntoComa
 {:
     Node node=new Node("declaración if",parser.token);
@@ -423,6 +625,10 @@ IFSTATE::= If EXPRESION_BOOLEAN:e then BODY:b end If PuntoComa
     node.addHijo((Node)el);
     RESULT=node;
 :};
+
+// ----------------------------------------
+// ELS, ELSIF  
+// ----------------------------------------
 
 ELSESTATE::= Else BODY:b
 {:
@@ -466,7 +672,10 @@ ELSIFSTATE::= elsif EXPRESION_BOOLEAN:e then BODY:b ELSIFSTATE:eif
     RESULT=node;
 :};
 
-// LOOP
+// ----------------------------------------
+// BLOQUE LOOP  
+// ----------------------------------------
+
 CICLOLOOP ::= loop BODY:b end loop PuntoComa{:
         Node ciclo = new Node("declaración ciclo loop",parser.token);
         parser.token++;
@@ -474,8 +683,12 @@ CICLOLOOP ::= loop BODY:b end loop PuntoComa{:
         RESULT=ciclo;
 :};
 
-// For
-CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop PuntoComa{:
+// ----------------------------------------
+// BLOQUE FOR   
+// ----------------------------------------
+
+CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop PuntoComa
+{:
         Node ciclo = new Node("declaración ciclo for",parser.token);
         parser.token++;
 
@@ -505,9 +718,77 @@ CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop 
         ciclo.addHijo((Node)b);
 
         RESULT= ciclo;
-:};
+:}
+| For Id:ide in Integer:l punto punto Id:h loop BODY:b end loop PuntoComa
+{:
+        Node ciclo = new Node("declaración ciclo for",parser.token);
+        parser.token++;
 
-//BODY
+        // Expresión
+        Node expr = new Node("expresión for",parser.token);
+        parser.token++;
+
+        Node id=new Node("id",parser.token);
+        parser.token++;
+        id.addHijo(ide.toString(),parser.token);
+        parser.token++;
+
+        Node num1=new Node("Integer",parser.token);
+        parser.token++;
+        num1.addHijo(""+l,parser.token);
+        parser.token++;
+
+        Node num2=new Node("Id",parser.token);
+        parser.token++;
+        num2.addHijo(""+h,parser.token);
+        parser.token++;
+
+        expr.addHijo(id);
+        expr.addHijo(num1);
+        expr.addHijo(num2);
+        ciclo.addHijo(expr);
+        ciclo.addHijo((Node)b);
+
+        RESULT= ciclo;
+:}
+| For Id:ide in Id:l punto punto Integer:h loop BODY:b end loop PuntoComa
+{:
+        Node ciclo = new Node("declaración ciclo for",parser.token);
+        parser.token++;
+
+        // Expresión
+        Node expr = new Node("expresión for",parser.token);
+        parser.token++;
+
+        Node id=new Node("id",parser.token);
+        parser.token++;
+        id.addHijo(ide.toString(),parser.token);
+        parser.token++;
+
+        Node num1=new Node("Id",parser.token);
+        parser.token++;
+        num1.addHijo(""+l,parser.token);
+        parser.token++;
+
+        Node num2=new Node("Integer",parser.token);
+        parser.token++;
+        num2.addHijo(""+h,parser.token);
+        parser.token++;
+
+        expr.addHijo(id);
+        expr.addHijo(num1);
+        expr.addHijo(num2);
+        ciclo.addHijo(expr);
+        ciclo.addHijo((Node)b);
+
+        RESULT= ciclo;
+:}
+;
+
+// -------------------------------------------
+// CUERPO DE FUNCIONES,PROCEDIMIENTOS, BLOQUES 
+// -------------------------------------------
+
 BODY::= PROPOSITION:p BODY:b  {:
         Node BODYn = new Node("BODY",  parser.token);
         parser.token++;
@@ -521,12 +802,18 @@ BODY::= PROPOSITION:p BODY:b  {:
                 
 :}     
 |{:
-    Node node=new Node("Vacio",parser.token);
+    Node node=new Node("Body Vacío",parser.token);
     parser.token++;
     RESULT=node;
-:};
+:}
+|error PROPOSITION 
+;
 
-//proposciones
+// ----------------------------------------
+// PROPOSICIONES  / WHILE
+// ----------------------------------------
+
+// PROPOSICIONES
 PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
 {:
     Node node = new Node("declaración ciclo while",parser.token);
@@ -554,10 +841,10 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
 {:
     RESULT = (Node)a;
 :}
-/*    |   llamadaFunc:lf PUNTOC
+  |   LLAMADA_F:lf PuntoComa
 {:
     RESULT=lf;
-:}*/
+:}
     |   IFSTATE:ife
 {:
     RESULT = ife;
@@ -576,9 +863,61 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
         node.addHijos(((Node)p).getHijos());
     }
     RESULT = node;
-:};
+:}
+| Return RETORNO:r PuntoComa
+{:
+    Node node = new Node("Return",parser.token);
+    parser.token++;
 
-// Proposiciones globales
+    node.addHijo((Node)r);
+
+    RESULT = node; 
+:}
+
+| Exit When EXPRESION_BOOLEAN:e PuntoComa
+{:
+    Node node = new Node("Exit when",parser.token);
+    parser.token++;
+
+    node.addHijo((Node)e);
+
+    RESULT = node; 
+:}
+;
+
+// ----------------------------------------
+// RETURNS POSIBLES  
+// ----------------------------------------
+
+
+RETORNO ::=  Boolean:b 
+{:
+    Node valor = new Node(""+b,parser.token);
+    parser.token++;
+
+    RESULT = valor; 
+:}
+| Id: i
+{:
+    RESULT = (Node)i;
+:}
+| LLAMADA_F :lf
+{:
+    RESULT = (Node)lf;
+:}
+| {:
+
+    Node valor = new Node("Return vacio",parser.token);
+    parser.token++;
+
+    RESULT = valor; 
+:}
+;
+
+// ----------------------------------------
+// PROPOSICIONES GLOBALES  
+// ----------------------------------------
+
 GLOBAL_PROPS ::= DECLARACION_SIMPLE:d
 {:
     RESULT = (Node)d;
@@ -588,9 +927,24 @@ GLOBAL_PROPS ::= DECLARACION_SIMPLE:d
 :} | DECLARACION_EXPRESION:da
 {:
     RESULT = (Node)da;
-:};
+:}
+| FUNC:f
+{:
+    System.out.println("Declaracion de funciones");
+    RESULT = (Node)f;
+:}
+| PROCEDURE:p
+{:
+    System.out.println("Declaracion de procedimiento");
+    RESULT = (Node)p;
+:}
 
-// Lista de proposiciones
+;
+
+// ----------------------------------------
+// LISTA DE PROPOSICIONES   
+// ----------------------------------------
+
 PROP_LIST ::= GLOBAL_PROPS:d PROP_LIST:pl
 {:  
     Node node = new Node("lista de proposiciones", parser.token);
@@ -601,9 +955,14 @@ PROP_LIST ::= GLOBAL_PROPS:d PROP_LIST:pl
     if(pl!=null) node.addHijos(((Node)pl).getHijos() );                      
     RESULT = node;
 :}
- | {:/*Vacío*/:};
+ | {:/*Vacío*/:}
+
+;
     
-// Cuerpo del start
+// --------------------------------------------------------
+// INCIO GLOBAL DE EL CUERPO DE PROCEDMIENTO Y FUNCIONES  
+// --------------------------------------------------------
+
 GLOBAL_START ::=  PROP_LIST:pl
 {:
     Node BODY=new Node("GLOBAL",parser.token);
@@ -614,9 +973,14 @@ GLOBAL_START ::=  PROP_LIST:pl
     }
 
     RESULT= BODY;
-:};
+:}
+| error PROP_LIST
+;
 
-// Tipo de datos
+// --------------------------------------------------------
+// TIPOS DE DATOS  
+// --------------------------------------------------------
+
 TYPE::= TypeBoolean
 {:
     Node nodo = new Node("TypeBoolean",  parser.token);
@@ -638,7 +1002,36 @@ TYPE::= TypeBoolean
 :}
 ;
 
-// Datos
+// --------------------------------------------------------
+// TIPO DE LOS PARAMETROS EN LAS FUNCIONES  
+// --------------------------------------------------------
+
+TIPO::= in
+{:
+    Node nodo = new Node("In",  parser.token);
+    parser.token++;
+    RESULT = nodo;
+    
+:}
+    | out
+{:
+    Node nodo = new Node("Out",  parser.token);
+    parser.token++;
+    RESULT = nodo;
+:}
+    | in out
+{:
+    Node nodo = new Node("In Out",  parser.token);
+    parser.token++;
+    RESULT = nodo;
+:}
+|{::}
+;
+
+// --------------------------------------------------------
+// TIPOS DE DATOS  
+// --------------------------------------------------------
+
 DATA::= Boolean
 {:
     Node nodo = new Node("boolean",  parser.token);
@@ -661,7 +1054,10 @@ DATA::= Boolean
 ;
 
 
-// Aritmetica
+// --------------------------------------------------------
+// GRAMATICA ARITMETICA   
+// --------------------------------------------------------
+
 EXPRESION_SIMPLE::= TERMINO:t
 {:  
     RESULT=t;
@@ -711,7 +1107,7 @@ TERMINO::= FACTOR:f
     Node node =new Node("termino",parser.token);
     parser.token++;
     if(t!=null){
-        node.addHijos(((Node)t).getHijos());
+        node.addHijos(((Node)t).getHijos());    
     }
     Node opea_mult=new Node("operador multiplicacion/division",parser.token);
     parser.token++;
@@ -785,7 +1181,10 @@ FACTOR::= Id:ide
 :};
 
 
-//valores
+// --------------------------------------------------------
+// VALORES UTILIZADOS EN PUTS    
+// --------------------------------------------------------
+
 VALORES::= Integer:n
 {:
     Node node=new Node("int",parser.token);
@@ -873,7 +1272,10 @@ LIST_EXPRESION::= EXPRESION:e
 :};
 
 
-// Expresiones booleanas
+// --------------------------------------------------------
+// EXPRESIONES BOOLEANAS   
+// --------------------------------------------------------
+
 EXPRESION_BOOLEAN ::= T_EXPRESION_BOOLEAN:t P_EXPRESION_BOOLEAN:p
 {:
     Node expr = new Node("expresión", parser.token++);
@@ -1045,6 +1447,10 @@ F_EXPRESION ::= Integer:n
     RESULT = (Node)f;
 :};
 
+// --------------------------------------------------------
+// FUNCIONES PUT   
+// --------------------------------------------------------
+
 PUT::= Put AbrirParentesis Id:ide CerrarParentesis PuntoComa
 {:
     Node node=new Node("PUT",parser.token);
@@ -1091,6 +1497,10 @@ PUT::= Put AbrirParentesis Id:ide CerrarParentesis PuntoComa
 
     RESULT=node;
 :};
+
+// --------------------------------------------------------
+// FUNCION GET   
+// --------------------------------------------------------
 
 GET::= Get AbrirParentesis Id:ide CerrarParentesis PuntoComa
 {:

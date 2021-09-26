@@ -97,6 +97,7 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     "Put_Line"          { return new Symbol (sym.Put_Line, yycolumn, yyline, yytext()); }
     "Get"          { return new Symbol(sym.Get,yycolumn,yyline,yytext());   }
     "in"          { return new Symbol(sym.in,yycolumn,yyline,yytext());   }
+    "out"          { return new Symbol(sym.out,yycolumn,yyline,yytext());   }
     "when"          { return new Symbol(sym.When,yycolumn,yyline,yytext());   }
     "exit"          { return new Symbol(sym.Exit,yycolumn,yyline,yytext());   }
     "function"          { return new Symbol(sym.Function,yycolumn,yyline,yytext());   }
@@ -143,7 +144,7 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
 
 <COMMENT_LINE>
 {
-    {EOL}        { yybegin(YYINITIAL); return new Symbol (sym.comentario, yycolumn, yyline, yytext()); }
+    {EOL}        { yybegin(YYINITIAL); }
     .           {}
 }
 

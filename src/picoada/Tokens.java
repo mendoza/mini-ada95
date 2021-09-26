@@ -30,6 +30,7 @@ public enum Tokens {
     Return,
     or,
     in,
+    out,
     diff,
     OperadorRelacional,
     Id,
