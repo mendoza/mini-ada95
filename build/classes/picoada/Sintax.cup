@@ -180,7 +180,6 @@ INICIO ::= PROCEDURE: b
     parser.token++;
     start.addHijos(((Node)b).getHijos());
     parser.Arbol = start;
-    parser.Arbol.recorrido(Arbol,0);
     RESULT = start;
 :}
 ;
