@@ -10,13 +10,19 @@ package picoada;
  * @author jeancasoto
  */
 import java.awt.Color;
+import java.awt.Desktop;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java_cup.runtime.Symbol;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 public class Main extends javax.swing.JFrame {
 
@@ -120,8 +126,8 @@ public class Main extends javax.swing.JFrame {
         jLabel73 = new javax.swing.JLabel();
         jLabel74 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        analisisLexico = new javax.swing.JTextArea();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTree1 = new javax.swing.JTree();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         consola = new javax.swing.JTextArea();
@@ -400,6 +406,11 @@ public class Main extends javax.swing.JFrame {
         );
 
         jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picoada/Iconos/github.png"))); // NOI18N
+        jLabel16.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel16MouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout TopBarLayout = new javax.swing.GroupLayout(TopBar);
         TopBar.setLayout(TopBarLayout);
@@ -860,19 +871,19 @@ public class Main extends javax.swing.JFrame {
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder(new java.awt.Color(204, 204, 204), new java.awt.Color(153, 153, 153)));
 
-        analisisLexico.setColumns(20);
-        analisisLexico.setRows(5);
-        jScrollPane2.setViewportView(analisisLexico);
+        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
+        jTree1.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
+        jScrollPane4.setViewportView(jTree1);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
         );
 
         jPanel3.setBackground(new java.awt.Color(204, 204, 204));
@@ -1046,6 +1057,17 @@ public class Main extends javax.swing.JFrame {
 
     }//GEN-LAST:event_loadButtonLabelMouseClicked
 
+    private void jLabel16MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel16MouseClicked
+        // TODO add your handling code here:        
+        Desktop d = Desktop.getDesktop();
+        try {
+            d.browse(new URI("http://github.com/mendoza/mini-ada95"));
+        } catch (URISyntaxException | IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_jLabel16MouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -1081,6 +1103,16 @@ public class Main extends javax.swing.JFrame {
         });
     }
 
+    private DefaultMutableTreeNode TransformToJTree(Node Arbol) {
+        DefaultMutableTreeNode nodo = new DefaultMutableTreeNode(Arbol.toString());
+        if (!Arbol.esHoja()) {
+            for (Node hijo : Arbol.getHijos()) {
+                nodo.add(TransformToJTree(hijo));
+            }
+        }
+        return nodo;
+    }
+
     private void analizadorSintactico() throws IOException {
 
         String codigo = editorCodigo.getText();
@@ -1093,15 +1125,18 @@ public class Main extends javax.swing.JFrame {
             Sintax.Arbol = new Node();
             LexerCup.errors = 0;
             s.parse();
+            DefaultMutableTreeNode nodo = TransformToJTree(Sintax.Arbol);
+            DefaultTreeModel TreeModel = (DefaultTreeModel) jTree1.getModel();
+            TreeModel.setRoot(nodo);
+            jTree1.setModel(TreeModel);
 
             if (Sintax.errors == 0 && LexerCup.errors == 0) {
-                System.out.println("No encontró errores");
                 consola.setText("Análisis finalizado exitosamente");
                 consola.setForeground(new Color(25, 111, 61));
             } else {
                 String syntaxLogs = s.getLogs();
                 String lexerLogs = lexer.getLogs();
-                consola.setText("Se encontraron " + LexerCup.errors + " errros lexicos\n" + lexerLogs + "Se encontraron " + Sintax.errors + " errros sintacticos\n" + syntaxLogs);
+                consola.setText("Se encontraron " + LexerCup.errors + " errores lexicos\n" + lexerLogs + "Se encontraron " + Sintax.errors + " errores sintacticos\n" + syntaxLogs);
                 consola.setForeground(Color.red);
             }
 
@@ -1118,7 +1153,7 @@ public class Main extends javax.swing.JFrame {
             while (true) {
                 Tokens tokens = lexer.yylex();
                 if (tokens == null) {
-                    analisisLexico.setText(resultado);
+//                    analisisLexico.setText(resultado);
                     return;
                 }
                 switch (tokens) {
@@ -1199,7 +1234,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel FileIconPanel7;
     private javax.swing.JPanel SideBar;
     private javax.swing.JPanel TopBar;
-    private javax.swing.JTextArea analisisLexico;
     private javax.swing.JLabel buildButtonLabel;
     private javax.swing.JPanel centeredPanel;
     private javax.swing.JTextArea consola;
@@ -1279,8 +1313,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JTree jTree1;
     private javax.swing.JLabel loadButtonLabel;
     private javax.swing.JPanel panelEditorCodigo;
     private javax.swing.JLabel runButtonLabel;
