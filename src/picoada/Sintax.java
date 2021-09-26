@@ -549,7 +549,6 @@ class CUP$Sintax$actions {
     parser.token++;
     start.addHijos(((Node)b).getHijos());
     parser.Arbol = start;
-    parser.Arbol.recorrido(Arbol,0);
     RESULT = start;
 
               CUP$Sintax$result = parser.getSymbolFactory().newSymbol("INICIO",0, ((java_cup.runtime.Symbol)CUP$Sintax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Sintax$stack.peek()), RESULT);
@@ -1855,7 +1854,6 @@ class CUP$Sintax$actions {
 		Object pl = (Object)((java_cup.runtime.Symbol) CUP$Sintax$stack.peek()).value;
 		  
     Node node = new Node("lista de proposiciones", parser.token);
-    System.out.println("Prop :v");
     // parser.token++;
     // Añadir la proposición
     node.addHijo((Node)d);
