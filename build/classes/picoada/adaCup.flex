@@ -62,7 +62,7 @@ diff = "/="
 not = "not"
 and="and"
 or="or"
-OpeR = {not}|{equals}|"<"|">"|"<="|">="|{and}|{or}
+OpeR = {not}|{equals}|"<"|">"|"<="|">="|{and}|{or}|{diff}
 OpeA_exp = "**" 
 OpeA_sum = "+"|"-"
 OpeA_mult = "*"|"/"

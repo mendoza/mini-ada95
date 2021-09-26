@@ -901,20 +901,10 @@ RETORNO ::=  Boolean:b
     Node valor = new Node(""+b,parser.token);
     parser.token++;
 
-    RESULT = valor; 
-:}
-| Id: i
+:} | NODE_EXPRESION: i
 {:
-    Node ret = new Node("Return de id",parser.token);
-    parser.token++;
+    RESULT = (Node)i; 
 
-    Node id=new Node("id",parser.token);
-    parser.token++;
-
-    id.addHijo(i.toString(),parser.token);
-    parser.token++;
-
-    RESULT = ret; 
 :}
 | LLAMADA_F :lf
 {:
@@ -963,7 +953,6 @@ GLOBAL_PROPS ::= DECLARACION_SIMPLE:d
 PROP_LIST ::= GLOBAL_PROPS:d PROP_LIST:pl
 {:  
     Node node = new Node("lista de proposiciones", parser.token);
-    System.out.println("Prop :v");
     // parser.token++;
     // Añadir la proposición
     node.addHijo((Node)d);
