@@ -855,15 +855,21 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
 {:
     RESULT=g;
 :}
-    | ERROR PROPOSITION:p
+
+/*
+    | error BODY
 {:
+
     Node node = new Node("Error ",parser.token);
     parser.token++;
     if(p!=null){
         node.addHijos(((Node)p).getHijos());
     }
     RESULT = node;
+
 :}
+
+*/
 | Return RETORNO:r PuntoComa
 {:
     Node node = new Node("Return",parser.token);
@@ -899,7 +905,16 @@ RETORNO ::=  Boolean:b
 :}
 | Id: i
 {:
-    RESULT = (Node)i;
+    Node ret = new Node("Return de id",parser.token);
+    parser.token++;
+
+    Node id=new Node("id",parser.token);
+    parser.token++;
+
+    id.addHijo(i.toString(),parser.token);
+    parser.token++;
+
+    RESULT = ret; 
 :}
 | LLAMADA_F :lf
 {:
@@ -1025,7 +1040,11 @@ TIPO::= in
     parser.token++;
     RESULT = nodo;
 :}
-|{::}
+| {:
+    Node nodo = new Node("Sin In o Out",  parser.token);
+    parser.token++;
+    RESULT = nodo;
+:}
 ;
 
 // --------------------------------------------------------
@@ -1327,7 +1346,18 @@ D_EXPRESION_BOOLEAN ::= and:o F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
     Node node =  new Node("#", parser.token++);
     parser.token++;
     RESULT = node;
+:}
+;
+/*
+    | diff:d F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
+{:
+    Node expr = new Node("Diferente", parser.token++);
+    parser.token++;
+    expr.addHijo((Node)f);
+    expr.addHijo((Node)d);
+    RESULT = expr;
 :};
+*/
 F_EXPRESION_BOOLEAN ::= Boolean:n
 {:
     Node node=new Node("Boolean",parser.token);
