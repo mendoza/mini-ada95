@@ -89,6 +89,10 @@ public class Node {
         return this.siguiente;
     }
 
+    public boolean esHoja() {
+        return this.hijos.isEmpty();
+    }
+
     public void setVerdadero(String verdadero) {
         this.verdadero = verdadero;
     }
