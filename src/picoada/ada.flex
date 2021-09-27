@@ -9,6 +9,7 @@ import java.util.LinkedList;
 %type Tokens
 %line
 %column
+%ignorecase
 
 %{
 

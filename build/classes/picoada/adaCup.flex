@@ -12,6 +12,7 @@ import java.util.LinkedList;
 %char
 %line
 %column
+%ignorecase
 %type java_cup.runtime.Symbol
 
 %{

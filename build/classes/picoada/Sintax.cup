@@ -49,7 +49,7 @@ parser code
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
         Logln("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
-        " no reconocido.");
+        " no reconocido."); 
         System.out.println("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido.");
@@ -187,10 +187,37 @@ INICIO ::= PROCEDURE: b
 // DECLARACION DE UN PROCEDURE COMO ADA95 COMIENZA
 // ----------------------------------------
 
-PROCEDURE ::= procedure Id is GLOBAL_START:b begin BODY:bs end Id PuntoComa
+PROCEDURE ::= procedure Id:i is GLOBAL_START:b begin BODY:bs end Id PuntoComa
 {:
-    Node node = new Node();
+    Node node = new Node("Procedure", parser.token++);
+
+
+    Node id = new Node("Nombre de procedure", parser.token);
+    parser.token++;   
+
+    id.addHijo(i.toString(), parser.token);
+    parser.token++;    
+
+    node.addHijo(id);
+
     if(b!=null) node.addHijo((Node)b);
+    if(bs!=null) if(bs!=null) node.addHijo((Node)bs);
+    RESULT=node;
+:}
+| procedure Id:i AbrirParentesis PARAMETROS:ptro CerrarParentesis is GLOBAL_START:b begin BODY:bs end Id PuntoComa
+{:
+    Node node = new Node("Procedure", parser.token++);
+    
+    Node id = new Node("Nombre de procedure", parser.token);
+    parser.token++;   
+
+    id.addHijo(i.toString(), parser.token);
+    parser.token++;    
+
+    node.addHijo(id);
+
+    if(b!=null) node.addHijo((Node)b);
+    if(ptro!=null) node.addHijo((Node)ptro);
     if(bs!=null) if(bs!=null) node.addHijo((Node)bs);
     RESULT=node;
 :}
