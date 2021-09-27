@@ -494,8 +494,9 @@ public class Sintax extends java_cup.runtime.lr_parser {
         /*
         System.out.println("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
         " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
-        errors++;
         */
+        errors++;
+
 
         List expected =expected_token_ids();
         if(expected.size()!=0){
