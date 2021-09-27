@@ -491,9 +491,11 @@ public class Sintax extends java_cup.runtime.lr_parser {
     public void syntax_error(Symbol s){ 
         Logln("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
         " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
+        /*
         System.out.println("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
         " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
         errors++;
+        */
 
         List expected =expected_token_ids();
         if(expected.size()!=0){
@@ -512,9 +514,11 @@ public class Sintax extends java_cup.runtime.lr_parser {
         Logln("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido."); 
+        /*
         System.out.println("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido.");
+        */
     }
 
 

@@ -1,4 +1,4 @@
-// ------ BLOQUES - ERRORES
+------ BLOQUES - ERRORES
 
 procedure Hello is
     a: Integer;

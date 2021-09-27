@@ -1,14 +1,14 @@
--- PROCEDIMIENTOS ANIDADOS
+-- PROCEDIMIENTOS ANIDADOS - ERROR
 
 procedure Hello is
-            a: Integer := 10;
-            b: Float := 20.0;
+            a; Integer := 10;
+            b, Float := 20.0;
     procedure World (a,b:in Integer; x,y :in out Boolean) is
 
         begin
 
-            if (a < b) and (2  < b) or (a > c)then
-                put(b);
+            if (a < b) and (2  < b) or (a > c) then
+                put(b)
 
             end if;
 
@@ -20,7 +20,7 @@ end World;
     begin
 
 
-        if (a < b) and (a  < b) or (a > c)then
+        if (a < b) and (a  < b) or (a > c) then
             put(b);
 
         end if;
