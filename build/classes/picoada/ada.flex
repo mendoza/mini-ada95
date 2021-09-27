@@ -57,7 +57,7 @@ or="or"
 OpeR = {not}|{equals}|"<"|">"|"<="|">="
 OpeA_exp = "**" 
 OpeA_sum = "+"|"-"
-OpeA_mult = "*"|"/"
+OpeA_mult = "*"|"/"|"**"
 
 
 
@@ -108,7 +108,6 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     {not}           { lexema = yytext(); return not;}
     {and}           { lexema = yytext(); return and;}
     {or}           { lexema = yytext(); return or;}
-    {diff}          {lexema = yytext(); return diff;}
     
     {OpeR}          { lexema = yytext(); return OperadorRelacional;}
     {id}            {lexema = yytext(); return Id;}

@@ -58,7 +58,7 @@ EOL = [\r|\n|\r\n]
 //Operadores
 assignment = ":="
 equals = "="
-diff = "!="
+diff = "/="
 not = "not"
 and="and"
 or="or"
