@@ -17,10 +17,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java_cup.runtime.Symbol;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
@@ -44,6 +42,9 @@ public class Main extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jDialog1 = new javax.swing.JDialog();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTree1 = new javax.swing.JTree();
         jLabel3 = new javax.swing.JLabel();
         SideBar = new javax.swing.JPanel();
         FileIconPanel = new javax.swing.JPanel();
@@ -126,8 +127,8 @@ public class Main extends javax.swing.JFrame {
         jLabel73 = new javax.swing.JLabel();
         jLabel74 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        analisisLexico = new javax.swing.JTextArea();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         consola = new javax.swing.JTextArea();
@@ -138,6 +139,21 @@ public class Main extends javax.swing.JFrame {
         jLabel25 = new javax.swing.JLabel();
         jLabel26 = new javax.swing.JLabel();
         centeredPanel = new javax.swing.JPanel();
+
+        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
+        jTree1.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
+        jScrollPane4.setViewportView(jTree1);
+
+        javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
+        jDialog1.getContentPane().setLayout(jDialog1Layout);
+        jDialog1Layout.setHorizontalGroup(
+            jDialog1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+        );
+        jDialog1Layout.setVerticalGroup(
+            jDialog1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+        );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(204, 204, 204));
@@ -246,6 +262,11 @@ public class Main extends javax.swing.JFrame {
         FileIconPanel6.setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picoada/Iconos/flow.png"))); // NOI18N
+        jLabel17.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel17MouseClicked(evt);
+            }
+        });
 
         jLabel18.setFont(new java.awt.Font("Andale Mono", 1, 12)); // NOI18N
         jLabel18.setText("Tree ");
@@ -871,19 +892,19 @@ public class Main extends javax.swing.JFrame {
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder(new java.awt.Color(204, 204, 204), new java.awt.Color(153, 153, 153)));
 
-        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
-        jTree1.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
-        jScrollPane4.setViewportView(jTree1);
+        analisisLexico.setColumns(20);
+        analisisLexico.setRows(5);
+        jScrollPane2.setViewportView(analisisLexico);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
         );
 
         jPanel3.setBackground(new java.awt.Color(204, 204, 204));
@@ -1034,7 +1055,7 @@ public class Main extends javax.swing.JFrame {
             Build.main(new String[0]);
             JOptionPane.showMessageDialog(centeredPanel, "Generación de archivos exitosa.", "Alert", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(centeredPanel, "Error en la genración de archivos.", "Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(centeredPanel, "Error en la generación de archivos.", "Error", JOptionPane.WARNING_MESSAGE);
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -1068,6 +1089,24 @@ public class Main extends javax.swing.JFrame {
 
     }//GEN-LAST:event_jLabel16MouseClicked
 
+    private void jLabel17MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel17MouseClicked
+        // TODO add your handling code here:
+        if (Sintax.Arbol != null) {
+
+            DefaultMutableTreeNode nodo = TransformToJTree(Sintax.Arbol);
+            DefaultTreeModel TreeModel = (DefaultTreeModel) jTree1.getModel();
+            TreeModel.setRoot(nodo);
+            jTree1.setModel(TreeModel);
+            jDialog1.setTitle("Arbol Generado");
+            jDialog1.setVisible(true);
+            jDialog1.setModal(true);
+            jDialog1.pack();
+            jDialog1.setLocationRelativeTo(centeredPanel);
+        } else {
+            JOptionPane.showMessageDialog(centeredPanel, "Error parece que el Arbol esta vacio.", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_jLabel17MouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -1084,15 +1123,11 @@ public class Main extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        
         //</editor-fold>
 
         /* Create and display the form */
@@ -1122,14 +1157,11 @@ public class Main extends javax.swing.JFrame {
         try {
             Sintax.errors = 0;
             Sintax.token = 0;
+            System.out.println(s.Logs);
             Sintax.Arbol = new Node();
             LexerCup.errors = 0;
             s.parse();
-            DefaultMutableTreeNode nodo = TransformToJTree(Sintax.Arbol);
-            DefaultTreeModel TreeModel = (DefaultTreeModel) jTree1.getModel();
-            TreeModel.setRoot(nodo);
-            jTree1.setModel(TreeModel);
-
+            consola.setText("");
             if (Sintax.errors == 0 && LexerCup.errors == 0) {
                 consola.setText("Análisis finalizado exitosamente");
                 consola.setForeground(new Color(25, 111, 61));
@@ -1141,7 +1173,9 @@ public class Main extends javax.swing.JFrame {
             }
 
         } catch (Exception ex) {
-
+//            System.out.print(ex.getStackTrace());
+//            System.out.print("catch",Sintax.errors);
+            
         }
     }
 
@@ -1153,7 +1187,7 @@ public class Main extends javax.swing.JFrame {
             while (true) {
                 Tokens tokens = lexer.yylex();
                 if (tokens == null) {
-//                    analisisLexico.setText(resultado);
+                    analisisLexico.setText(resultado);
                     return;
                 }
                 switch (tokens) {
@@ -1219,7 +1253,7 @@ public class Main extends javax.swing.JFrame {
                         break;
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
 
         }
     }
@@ -1234,10 +1268,12 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel FileIconPanel7;
     private javax.swing.JPanel SideBar;
     private javax.swing.JPanel TopBar;
+    private javax.swing.JTextArea analisisLexico;
     private javax.swing.JLabel buildButtonLabel;
     private javax.swing.JPanel centeredPanel;
     private javax.swing.JTextArea consola;
     private javax.swing.JTextArea editorCodigo;
+    private javax.swing.JDialog jDialog1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1313,6 +1349,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTree jTree1;

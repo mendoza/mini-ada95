@@ -58,14 +58,14 @@ EOL = [\r|\n|\r\n]
 //Operadores
 assignment = ":="
 equals = "="
-diff = "/="
+diff = "!="
 not = "not"
 and="and"
 or="or"
-OpeR = {not}|{equals}|"<"|">"|"<="|">="|{and}|{or}|{diff}
+OpeR = {equals}|"<"|">"|"<="|">="|{diff}
 OpeA_exp = "**" 
 OpeA_sum = "+"|"-"
-OpeA_mult = "*"|"/"
+OpeA_mult = "*"|"/"|"**"
 
 comillas = \\\"
 
@@ -112,8 +112,7 @@ id = {letter}+("_"{letter}+{digit}*)* ({letter}+ | {digit}+ ) | {letter}+("_"{di
     {not}           { return new Symbol (sym.not, yycolumn, yyline, yytext());}
     {and}           { return new Symbol (sym.and, yycolumn, yyline, yytext());}
     {or}           { return new Symbol (sym.or, yycolumn, yyline, yytext());}
-    {diff}           { return new Symbol (sym.diff, yycolumn, yyline, yytext());}
-    
+
     {OpeR}          { return new Symbol (sym.OperadorRelacional, yycolumn, yyline, yytext()); }
     {id}            { return new Symbol (sym.Id, yycolumn, yyline, yytext()); }
 

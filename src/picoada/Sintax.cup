@@ -8,7 +8,7 @@ import java.util.List;
 parser code
 {:
 
-    private String Logs="";
+    public String Logs="";
     public static int errors = 0;
     public static int token = 0;
     public static Node Arbol;
@@ -19,41 +19,40 @@ parser code
     public String getLogs(){
         return this.Logs;
     }
-
     public void Log(String cadena){
-        this.Logs += cadena + "\n" ;
+        this.Logs += cadena;
+    }
+    public void Logln(String cadena){
+        this.Logs += cadena + "\n";
     }
 
     public void syntax_error(Symbol s){ 
-        Log("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
+        Logln("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
         " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
-
         System.out.println("Error Sintáctico RECUPERABLE en la Columna " + (s.left+1) +
         " linea "+(s.right+1)+ ". No se esperaba este componente: " +s.value);
-        
         errors++;
 
         List expected =expected_token_ids();
         if(expected.size()!=0){
             int id;
-            Log("TOKEN ESPERADO..");
+            Log("Tokens Esperados: ");
             for(int i=0;i<expected.size();i++){
                 id = (int) expected.get(i);
                 String suffix = i == expected.size() - 1?"":" | ";    
                 Log(sym.terminalNames[id]+suffix);
             }
+            Logln("");
         }
     } 
 
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
-        Log("Error síntactico IRRECUPERABLE en la columna " + 
+        Logln("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido.");
-
         System.out.println("Error síntactico IRRECUPERABLE en la columna " + 
         (s.left+1)+ " linea "+(s.right+1)+". Componente " + s.value + 
         " no reconocido.");
-        // Log("Sintaxis mal escrito,irrecuperable"); 
     }
 
 :};
@@ -178,7 +177,7 @@ INICIO ::= PROCEDURE: b
 {:
     Node start = new Node("Start",token);
     parser.token++;
-    start.addHijos(((Node)b).getHijos());
+    if(b!=null) start.addHijos(((Node)b).getHijos());
     parser.Arbol = start;
     RESULT = start;
 :}
@@ -191,8 +190,8 @@ INICIO ::= PROCEDURE: b
 PROCEDURE ::= procedure Id is GLOBAL_START:b begin BODY:bs end Id PuntoComa
 {:
     Node node = new Node();
-    node.addHijo((Node)b);
-    node.addHijo((Node)bs);
+    if(b!=null) node.addHijo((Node)b);
+    if(bs!=null) if(bs!=null) node.addHijo((Node)bs);
     RESULT=node;
 :}
 |error PuntoComa
@@ -209,9 +208,7 @@ PROCEDURE ::= procedure Id is GLOBAL_START:b begin BODY:bs end Id PuntoComa
 // ----------------------------------------
 
 FUNC ::= Function Id:i AbrirParentesis PARAMETROS:ptros CerrarParentesis Return TYPE:t is GLOBAL_START:b begin BODY:bs end Id PuntoComa
-{:
-    System.out.println("Declaracion de funciones");
-    
+{:    
     Node node = new Node("Declaracion de funcion", parser.token);
     parser.token++;
 
@@ -223,9 +220,10 @@ FUNC ::= Function Id:i AbrirParentesis PARAMETROS:ptros CerrarParentesis Return 
 
     node.addHijo(id);
     node.addHijo((Node)b);
-    node.addHijo((Node)bs);
+    if(bs!=null) node.addHijo((Node)bs);
     node.addHijo((Node)t);
-    node.addHijo((Node)ptros);
+    if(ptros != null)
+        node.addHijo((Node)ptros);
     RESULT=node;
 :}
 // | error PuntoComa FUNC
@@ -333,7 +331,6 @@ PARAMETROS ::= PARAMETRO:ptro
 // ----------------------------------------
 DECLARACION_SIMPLE ::= MULT_IDS:i DosPuntos TYPE:t PuntoComa
 {:
-        System.out.println("Declaración simple");
         // Declaro el nodo declaración de variables
         Node decl = new Node("declaracion de variable simple",  parser.token);
 
@@ -791,7 +788,7 @@ CICLOFOR ::= For Id:ide in Integer:l punto punto Integer:h loop BODY:b end loop 
 BODY::= PROPOSITION:p BODY:b  {:
         Node BODYn = new Node("BODY",  parser.token);
         parser.token++;
-        BODYn.addHijo((Node) p);
+        if(p!=null) BODYn.addHijo((Node) p);
         
         if(b!=null){
             BODYn.addHijos(((Node)b).getHijos());
@@ -804,8 +801,7 @@ BODY::= PROPOSITION:p BODY:b  {:
     Node node=new Node("Body Vacío",parser.token);
     parser.token++;
     RESULT=node;
-:}
-|error PROPOSITION 
+:} |error BODY
 ;
 
 // ----------------------------------------
@@ -854,27 +850,12 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
 {:
     RESULT=g;
 :}
-
-/*
-    | error BODY
-{:
-
-    Node node = new Node("Error ",parser.token);
-    parser.token++;
-    if(p!=null){
-        node.addHijos(((Node)p).getHijos());
-    }
-    RESULT = node;
-
-:}
-
-*/
 | Return RETORNO:r PuntoComa
 {:
     Node node = new Node("Return",parser.token);
     parser.token++;
 
-    node.addHijo((Node)r);
+    if(r!=null) node.addHijo((Node)r);
 
     RESULT = node; 
 :}
@@ -887,7 +868,7 @@ PROPOSITION::= While EXPRESION_BOOLEAN:e loop BODY:b end loop PuntoComa
     node.addHijo((Node)e);
 
     RESULT = node; 
-:}
+:} 
 ;
 
 // ----------------------------------------
@@ -934,12 +915,10 @@ GLOBAL_PROPS ::= DECLARACION_SIMPLE:d
 :}
 | FUNC:f
 {:
-    System.out.println("Declaracion de funciones");
     RESULT = (Node)f;
 :}
 | PROCEDURE:p
 {:
-    System.out.println("Declaracion de procedimiento");
     RESULT = (Node)p;
 :}
 
@@ -954,8 +933,8 @@ PROP_LIST ::= GLOBAL_PROPS:d PROP_LIST:pl
     Node node = new Node("lista de proposiciones", parser.token);
     // parser.token++;
     // Añadir la proposición
-    node.addHijo((Node)d);
-    if(pl!=null) node.addHijos(((Node)pl).getHijos() );                      
+    if(d != null) node.addHijo((Node)d);
+    if(pl!=null) node.addHijos(((Node)pl).getHijos() );                  
     RESULT = node;
 :}
  | {:/*Vacío*/:}
@@ -1170,21 +1149,6 @@ FACTOR::= Id:ide
     parser.token++;
     node.addHijo((Node)e);
     RESULT=node;
-:}
-    |   not:n FACTOR:f
-{:
-    Node node=new Node("factor",parser.token);
-    parser.token++;
-
-    Node not=new Node("Not",parser.token);
-    parser.token++;
-    not.addHijo(n.toString(),parser.token);
-
-    if(f!=null){
-        node.addHijos(((Node)f).getHijos());
-    }
-
-    RESULT=node;
 :};
 
 
@@ -1298,7 +1262,7 @@ P_EXPRESION_BOOLEAN ::= or:o T_EXPRESION_BOOLEAN:t P_EXPRESION_BOOLEAN:p
     expr.addHijos( ((Node)t).getHijos() );
     expr.addHijo((Node)p);
     RESULT = expr;
-:}
+:} 
     | 
 {:
     Node node =  new Node("#", parser.token++);
@@ -1320,7 +1284,7 @@ D_EXPRESION_BOOLEAN ::= and:o F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
     expr.addHijo((Node)f);
     expr.addHijo((Node)d);
     RESULT = expr;
-:}
+:} 
     | OperadorRelacional:o F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
 {:
     Node expr = new Node(o.toString(), parser.token++);
@@ -1334,18 +1298,8 @@ D_EXPRESION_BOOLEAN ::= and:o F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
     Node node =  new Node("#", parser.token++);
     parser.token++;
     RESULT = node;
-:}
-;
-/*
-    | diff:d F_EXPRESION_BOOLEAN:f D_EXPRESION_BOOLEAN:d
-{:
-    Node expr = new Node("Diferente", parser.token++);
-    parser.token++;
-    expr.addHijo((Node)f);
-    expr.addHijo((Node)d);
-    RESULT = expr;
 :};
-*/
+
 F_EXPRESION_BOOLEAN ::= Boolean:n
 {:
     Node node=new Node("Boolean",parser.token);
@@ -1379,7 +1333,11 @@ F_EXPRESION_BOOLEAN ::= Boolean:n
     parser.token++;
     node.addHijo(valor);
     RESULT = node;
-:} 
+:} | not:n F_EXPRESION_BOOLEAN:f {:
+    Node expr = new Node("not", parser.token++);
+    expr.addHijo((Node)f);
+    RESULT = expr;
+:}
     | AbrirParentesis EXPRESION_BOOLEAN:f CerrarParentesis
 {:
     RESULT = (Node)f;
