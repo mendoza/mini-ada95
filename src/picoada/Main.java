@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -1148,8 +1149,8 @@ public class Main extends javax.swing.JFrame {
     private void jLabel17MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel17MouseClicked
         // TODO add your handling code here:
         if (Sintax.Arbol != null) {
-
             DefaultMutableTreeNode nodo = TransformToJTree(Sintax.Arbol);
+            CrearTablas(Sintax.Arbol, null);
             DefaultTreeModel TreeModel = (DefaultTreeModel) jTree1.getModel();
             TreeModel.setRoot(nodo);
             jTree1.setModel(TreeModel);
@@ -1204,6 +1205,129 @@ public class Main extends javax.swing.JFrame {
         return nodo;
     }
 
+    private void CrearTablas(Node Arbol, Ambitos padre) {
+        if (!Arbol.esHoja()) {
+            String nombre = Arbol.valor;
+            if (padre == null) {
+                CrearAmbito(Arbol, null);
+            }
+            for (Node hijo : Arbol.getHijos()) {
+                switch (hijo.valor) {
+                    case "Procedure":
+                    case "Declaracion de funcion": {
+                        // Aqui iria el codigo de la tabla de funciones :v <3
+                        Ambitos ids = CrearAmbito(hijo, padre);
+                        if (padre == null) {
+                            ambitos = ids;
+                        }
+                        System.out.println(ids);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private ArrayList<Valor> getAllIds(Node arbol) {
+        ArrayList<Valor> ids = new ArrayList<>();
+        if (!arbol.esHoja()) {
+            for (Node hijo : arbol.getHijos()) {
+                switch (hijo.valor) {
+                    case "declaracion de variable simple":
+                    case "Declaracion": {
+                        String type = hijo.getHijo(0).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            if (nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                ids.add(new Valor(id, type));
+                            }
+                        }
+                        break;
+                    }
+
+                    case "declaracion y asignacion expresión":
+                    case "declaracion y asignacion":
+                    case "declaracion y asignacion por funcion": {
+                        String type = hijo.getHijo(0).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            System.out.println(nieto);
+                            if (nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                ids.add(new Valor(id, type));
+                            } else if (nieto.valor.equals("expresión")) {
+
+                            }
+                        }
+                        break;
+                    }
+                    case "asignacion":
+                    case "asignacion por llamada a funcion":
+                    case "asignación expresión": {
+
+                        break;
+                    }
+                }
+            }
+        }
+        return ids;
+    }
+
+    private Ambitos CrearAmbito(Node Arbol, Ambitos padre) {
+        String nombre = Arbol.valor;
+        Ambitos ambito = new Ambitos(nombre);
+        if (padre != null) {
+            padre.addHijo(ambito);
+        }
+        ArrayList<Valor> ids = new ArrayList<>();
+        for (Node hijo : Arbol.getHijos()) {
+            switch (hijo.valor) {
+                case "Parametro":
+                case "Parametros": {
+                    if (hijo.valor.equals("Parametros")) {
+                        for (Node parametro : hijo.getHijos()) {
+                            String id = parametro.getHijo(1).getHijo(0).valor;
+                            String type = parametro.getHijo(0).valor;
+                            String tipo = parametro.getHijo(2).valor;
+
+                            ambito.agregarValor(id, new Valor(id, type, tipo));
+                        }
+                    } else {
+                        String id = hijo.getHijo(1).getHijo(0).valor;
+                        String type = hijo.getHijo(0).valor;
+                        String tipo = hijo.getHijo(2).valor;
+                        ambito.agregarValor(id, new Valor(id, type, tipo));
+                    }
+                    break;
+                }
+                case "Nombre de funcion":
+                case "Nombre de procedure": {
+                    nombre = hijo.getHijo(0).valor;
+                    ambito.NombreAmbito = nombre;
+                    break;
+                }
+
+                case "GLOBAL": {
+                    for (Node nieto : hijo.getHijos()) {
+                        switch (nieto.valor) {
+                            case "Procedure":
+                            case "Declaracion de funcion": {
+                                CrearAmbito(nieto, ambito);
+                            }
+                        }
+                    }
+                    ids = getAllIds(hijo);
+                    break;
+                }
+
+            }
+        }
+
+        ambito.addValores(ids);
+        System.out.println(ambito);
+
+        return ambito;
+    }
+
     private void analizadorSintactico() throws IOException {
 
         String codigo = editorCodigo.getText();
@@ -1231,7 +1355,7 @@ public class Main extends javax.swing.JFrame {
         } catch (Exception ex) {
 //            System.out.print(ex.getStackTrace());
 //            System.out.print("catch",Sintax.errors);
-                ex.printStackTrace();
+            ex.printStackTrace();
 
         }
     }
@@ -1419,5 +1543,6 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel runButtonLabel;
     // End of variables declaration//GEN-END:variables
     public static Node root;
+    public static Ambitos ambitos;
 
 }

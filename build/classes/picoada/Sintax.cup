@@ -339,15 +339,17 @@ PARAMETROS ::= PARAMETRO:ptro
 | PARAMETRO:ptro PuntoComa PARAMETROS:ptros  
 {:
 
-    Node decl = new Node("Declaracion de parametros" ,parser.token);
+    Node decl = new Node("Parametros" ,parser.token);
     parser.token++;
 
 
     decl.addHijo((Node)ptro);
 
-
-    decl.addHijos(((Node)ptros).getHijos());
-
+    if(((Node)ptros).valor.equals("Parametro")){
+            decl.addHijo((Node)ptros);
+    }else{
+        decl.addHijos(((Node)ptros).getHijos());
+    }
 
     RESULT = decl;
 :}
@@ -559,7 +561,7 @@ ASIGNACION ::=  Id:ide asignacion Boolean:b PuntoComa
 
 |  Id:ide asignacion LLAMADA_F:f PuntoComa
 {:
-        Node decl = new Node("declaracion y asignacion por llamada a funcion",  parser.token);
+        Node decl = new Node("asignacion por llamada a funcion",  parser.token);
         parser.token++;
 
         // Asigno el id
@@ -1040,7 +1042,7 @@ TIPO::= in
     RESULT = nodo;
 :}
 | {:
-    Node nodo = new Node("Sin In o Out",  parser.token);
+    Node nodo = new Node("In Out",  parser.token);
     parser.token++;
     RESULT = nodo;
 :}

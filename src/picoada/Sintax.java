@@ -831,15 +831,17 @@ class CUP$Sintax$actions {
 		Object ptros = (Object)((java_cup.runtime.Symbol) CUP$Sintax$stack.peek()).value;
 		
 
-    Node decl = new Node("Declaracion de parametros" ,parser.token);
+    Node decl = new Node("Parametros" ,parser.token);
     parser.token++;
 
 
     decl.addHijo((Node)ptro);
 
-
-    decl.addHijos(((Node)ptros).getHijos());
-
+    if(((Node)ptros).valor.equals("Parametro")){
+            decl.addHijo((Node)ptros);
+    }else{
+        decl.addHijos(((Node)ptros).getHijos());
+    }
 
     RESULT = decl;
 
@@ -1141,7 +1143,7 @@ class CUP$Sintax$actions {
 		int fright = ((java_cup.runtime.Symbol)CUP$Sintax$stack.elementAt(CUP$Sintax$top-1)).right;
 		Object f = (Object)((java_cup.runtime.Symbol) CUP$Sintax$stack.elementAt(CUP$Sintax$top-1)).value;
 		
-        Node decl = new Node("declaracion y asignacion por llamada a funcion",  parser.token);
+        Node decl = new Node("asignacion por llamada a funcion",  parser.token);
         parser.token++;
 
         // Asigno el id
@@ -2058,7 +2060,7 @@ class CUP$Sintax$actions {
             {
               Object RESULT =null;
 		
-    Node nodo = new Node("Sin In o Out",  parser.token);
+    Node nodo = new Node("In Out",  parser.token);
     parser.token++;
     RESULT = nodo;
 
