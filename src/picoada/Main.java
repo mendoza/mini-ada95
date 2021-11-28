@@ -1150,7 +1150,6 @@ public class Main extends javax.swing.JFrame {
         // TODO add your handling code here:
         if (Sintax.Arbol != null) {
             DefaultMutableTreeNode nodo = TransformToJTree(Sintax.Arbol);
-            CrearTablas(Sintax.Arbol, null);
             DefaultTreeModel TreeModel = (DefaultTreeModel) jTree1.getModel();
             TreeModel.setRoot(nodo);
             jTree1.setModel(TreeModel);
@@ -1260,12 +1259,6 @@ public class Main extends javax.swing.JFrame {
                         }
                         break;
                     }
-                    case "asignacion":
-                    case "asignacion por llamada a funcion":
-                    case "asignación expresión": {
-
-                        break;
-                    }
                 }
             }
         }
@@ -1288,14 +1281,19 @@ public class Main extends javax.swing.JFrame {
                             String id = parametro.getHijo(1).getHijo(0).valor;
                             String type = parametro.getHijo(0).valor;
                             String tipo = parametro.getHijo(2).valor;
-
-                            ambito.agregarValor(id, new Valor(id, type, tipo));
+                            boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
+                            if (!error) {
+                                Log("Error: Identificador %s ya declarado".formatted(id));
+                            }
                         }
                     } else {
                         String id = hijo.getHijo(1).getHijo(0).valor;
                         String type = hijo.getHijo(0).valor;
                         String tipo = hijo.getHijo(2).valor;
-                        ambito.agregarValor(id, new Valor(id, type, tipo));
+                        boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
+                        if (!error) {
+                            Log("Error: Identificador %s ya declarado".formatted(id));
+                        }
                     }
                     break;
                 }
@@ -1316,16 +1314,156 @@ public class Main extends javax.swing.JFrame {
                         }
                     }
                     ids = getAllIds(hijo);
+                    addValores(ambito, ids);
+                    break;
+                }
+                case "BODY": {
+                    checkBody(hijo, ambito);
                     break;
                 }
 
             }
         }
-
-        ambito.addValores(ids);
-        System.out.println(ambito);
-
         return ambito;
+    }
+
+    private void checkBody(Node body, Ambitos ambito) {
+        for (Node hijo : body.getHijos()) {
+            switch (hijo.valor) {
+                case "else": {
+                    Node bodyFor = hijo.getHijo(0);
+                    checkBody(bodyFor, ambito);
+                    break;
+                }
+                case "declaración elsif":
+                case "declaración if": {
+                    Node expresion = hijo.getHijo(1).getHijo(0);
+                    if (expresion.valor.equals("id")) {
+                        expresion = hijo.getHijo(1);
+                    }
+                    Node bodyIf = hijo.getHijo(2);
+                    checkBody(bodyIf, ambito);
+                    checkBody(hijo, ambito);
+                    evaluarExpresion(expresion, ambito);
+                    break;
+                }
+                case "declaración ciclo for": {
+                    Node bodyFor = hijo.getHijo(1);
+                    checkBody(bodyFor, ambito);
+                    break;
+                }
+                case "declaración ciclo while": {
+                    Node expresion = hijo.getHijo(1).getHijo(0);
+                    Node bodyWhile = hijo.getHijo(2);
+                    checkBody(bodyWhile, ambito);
+                    evaluarExpresion(expresion, ambito);
+                    break;
+                }
+                case "declaración ciclo loop": {
+                    Node bodyLoop = hijo.getHijo(0);
+                    checkBody(bodyLoop, ambito);
+                    for (Node nieto : bodyLoop.getHijos()) {
+                        switch (nieto.valor) {
+                            case "Exit when": {
+                                Node expresion = nieto.getHijo(0).getHijo(0);
+                                evaluarExpresion(expresion, ambito);
+                            }
+                        }
+                    }
+                    break;
+                }
+//                            case "asignacion por llamada a funcion":
+                case "asignacion": {
+                    String id = hijo.getHijo(0).getHijo(0).valor;
+                    String type = hijo.getHijo(1).getHijo(0).valor;
+                    String value = hijo.getHijo(1).getHijo(0).getHijo(0).valor;
+                    Object valor = ambito.TablaSimbolos.get(id);
+                    if (valor != null) {
+                        ambito.TablaSimbolos.get(id);
+                        String IdType = ((Valor) valor).type;
+                        if (type.equals(IdType)) {
+                            ((Valor) valor).valor = value;
+                        } else {
+                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, type));
+                        }
+                    } else {
+                        Log("Error: Identificador %s no declarado".formatted(id));
+                    }
+                    break;
+                }
+                case "asignación expresión": {
+                    String id = hijo.getHijo(0).getHijo(0).valor;
+                    Object valor = ambito.TablaSimbolos.get(id);
+                    if (valor != null) {
+                        String type = ((Valor) valor).type;
+                        Node expresion = hijo.getHijo(1);
+                        String typeEx = "Type" + evaluarExpresion(expresion, ambito);
+                        if (!type.equals(typeEx)) {
+                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, typeEx));
+                        }
+                    } else {
+                        Log("Error: Identificador %s no declarado".formatted(id));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    public void addValores(Ambitos ambito, ArrayList<Valor> ids) {
+        for (Valor id : ids) {
+            boolean error = ambito.agregarValor(id.id, id);
+            if (!error) {
+                Log("Error: Identificador %s ya declarado".formatted(id.id));
+            }
+        }
+    }
+
+    private String evaluarExpresion(Node expresion, Ambitos ambito) {
+        String E1 = expresion.getHijo(0).valor;
+        if (E1.equals("id")) {
+            String id = expresion.getHijo(0).getHijo(0).valor;
+            Object valor = ambito.TablaSimbolos.get(id);
+            if (valor != null) {
+                E1 = ((Valor) valor).type;
+                E1 = E1.replace("Type", "");
+            } else {
+                Log("Error: Identificador %s no declarado".formatted(id));
+                return "Unknown";
+            }
+        }
+        String E2 = expresion.getHijo(1).valor;
+        String E3 = "#";
+        if (expresion.getHijos().size() == 3) {
+            E3 = expresion.getHijo(2).valor;
+        }
+        String tipoRet = "Error";
+        if (!E1.equals("#") && E2.equals("#") && E3.equals("#")) {
+            return E1;
+        }
+
+        if (!E1.equals("#") && !E2.equals("#") && E3.equals("#")) {
+            String tipoExpresion = evaluarExpresion(expresion.getHijo(1), ambito);
+            if (!E1.equals(tipoExpresion)) {
+                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E2, tipoExpresion));
+            }
+            return tipoExpresion;
+        }
+
+        if (!E1.equals("#") && E2.equals("#") && !E3.equals("#")) {
+            String tipoExpresion = evaluarExpresion(expresion.getHijo(2), ambito);
+            if (!E1.equals(tipoExpresion)) {
+                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E3, tipoExpresion));
+            }
+            return tipoExpresion;
+        }
+        return tipoRet;
+
+    }
+
+    private void Log(String log) {
+        semanticErrors++;
+        logs += log + "\n";
     }
 
     private void analizadorSintactico() throws IOException {
@@ -1337,14 +1475,21 @@ public class Main extends javax.swing.JFrame {
         try {
             Sintax.errors = 0;
             Sintax.token = 0;
-            System.out.println(s.Logs);
+            semanticErrors = 0;
+            logs = "";
             Sintax.Arbol = new Node();
             LexerCup.errors = 0;
             s.parse();
             consola.setText("");
             if (Sintax.errors == 0 && LexerCup.errors == 0) {
-                consola.setText("Análisis finalizado exitosamente");
-                consola.setForeground(new Color(25, 111, 61));
+                CrearTablas(Sintax.Arbol, null);
+                if (semanticErrors == 0) {
+                    consola.setText("Análisis finalizado exitosamente");
+                    consola.setForeground(new Color(25, 111, 61));
+                } else {
+                    consola.setText("Se encontraron %d errores semanticos\n%s".formatted(semanticErrors, logs));
+                    consola.setForeground(Color.red);
+                }
             } else {
                 String syntaxLogs = s.getLogs();
                 String lexerLogs = lexer.getLogs();
@@ -1353,8 +1498,6 @@ public class Main extends javax.swing.JFrame {
             }
 
         } catch (Exception ex) {
-//            System.out.print(ex.getStackTrace());
-//            System.out.print("catch",Sintax.errors);
             ex.printStackTrace();
 
         }
@@ -1544,5 +1687,7 @@ public class Main extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
     public static Node root;
     public static Ambitos ambitos;
+    public static String logs = "";
+    public static int semanticErrors = 0;
 
 }

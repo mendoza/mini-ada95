@@ -25,13 +25,13 @@ public class Ambitos {
         this.TablaSimbolos = new HashMap<String, Valor>();
     }
 
-    public void agregarValor(String key, Valor value) {
+    public boolean agregarValor(String key, Valor value) {
         if (this.TablaSimbolos.get(key) == null) {
             this.TablaSimbolos.put(key, value);
+            return true;
         } else {
-            throw new Error("papi que putas? eso ya existe >:v");
+            return false;
         }
-
     }
 
     public ArrayList<Ambitos> getHijos() {
@@ -67,12 +67,6 @@ public class Ambitos {
 
     public boolean esHoja() {
         return this.hijos.isEmpty();
-    }
-
-    public void addValores(ArrayList<Valor> ids) {
-        for (Valor id : ids) {
-            this.agregarValor(id.id, id);
-        }
     }
 
     @Override

@@ -15,6 +15,7 @@ public class Valor {
     public int offset = -1;
     public String id = "";
     public String tipo = null;
+    public String valor = "";
 
     Valor(String id, String type) {
         this.id = id;
