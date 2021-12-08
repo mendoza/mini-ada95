@@ -15,6 +15,7 @@ import java.util.HashMap;
 public class Ambitos {
 
     public HashMap TablaSimbolos;
+    public HashMap TablaFunciones;
 
     public String NombreAmbito = "";
     public ArrayList<Ambitos> hijos = new ArrayList<>();
@@ -23,11 +24,21 @@ public class Ambitos {
     Ambitos(String NombreAmbito) {
         this.NombreAmbito = NombreAmbito;
         this.TablaSimbolos = new HashMap<String, Valor>();
+        this.TablaFunciones = new HashMap<String, Funcion>();
     }
 
     public boolean agregarValor(String key, Valor value) {
         if (this.TablaSimbolos.get(key) == null) {
             this.TablaSimbolos.put(key, value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean agregarFuncion(String key, Funcion value) {
+        if (this.TablaFunciones.get(key) == null) {
+            this.TablaFunciones.put(key, value);
             return true;
         } else {
             return false;
@@ -69,8 +80,28 @@ public class Ambitos {
         return this.hijos.isEmpty();
     }
 
+    public void recorrido(Ambitos root, int espacio) {
+        if (!root.hijos.isEmpty()) {
+            for (int i = 0; i < espacio; i++) {
+                System.out.print("····");
+            }
+            System.out.println(root);
+
+            recorrido(root.hijos.get(0), espacio + 1);
+            for (int i = 1; i < root.hijos.size(); i++) {
+                recorrido(root.hijos.get(i), espacio + 1);
+            }
+        } else {
+            for (int i = 0; i < espacio; i++) {
+                System.out.print("····");
+            }
+            System.out.println(root);
+        }
+    }
+
     @Override
     public String toString() {
-        return "Ambito: " + this.NombreAmbito + " Valores: " + this.TablaSimbolos + " hijos: " + this.hijos.size();
+        return NombreAmbito + "{" + "TablaSimbolos=" + TablaSimbolos + ", TablaFunciones=" + TablaFunciones + ", hijos=" + hijos.size() + "}";
     }
+
 }

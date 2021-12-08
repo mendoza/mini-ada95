@@ -1163,309 +1163,7 @@ public class Main extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jLabel17MouseClicked
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Main().setVisible(true);
-            }
-        });
-    }
-
-    private DefaultMutableTreeNode TransformToJTree(Node Arbol) {
-        DefaultMutableTreeNode nodo = new DefaultMutableTreeNode(Arbol.toString());
-        if (!Arbol.esHoja()) {
-            for (Node hijo : Arbol.getHijos()) {
-                nodo.add(TransformToJTree(hijo));
-            }
-        }
-        return nodo;
-    }
-
-    private void CrearTablas(Node Arbol, Ambitos padre) {
-        if (!Arbol.esHoja()) {
-            String nombre = Arbol.valor;
-            if (padre == null) {
-                CrearAmbito(Arbol, null);
-            }
-            for (Node hijo : Arbol.getHijos()) {
-                switch (hijo.valor) {
-                    case "Procedure":
-                    case "Declaracion de funcion": {
-                        // Aqui iria el codigo de la tabla de funciones :v <3
-                        Ambitos ids = CrearAmbito(hijo, padre);
-                        if (padre == null) {
-                            ambitos = ids;
-                        }
-                        System.out.println(ids);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    private ArrayList<Valor> getAllIds(Node arbol) {
-        ArrayList<Valor> ids = new ArrayList<>();
-        if (!arbol.esHoja()) {
-            for (Node hijo : arbol.getHijos()) {
-                switch (hijo.valor) {
-                    case "declaracion de variable simple":
-                    case "Declaracion": {
-                        String type = hijo.getHijo(0).valor;
-                        for (Node nieto : hijo.getHijos()) {
-                            if (nieto.valor.equals("id")) {
-                                String id = nieto.getHijo(0).valor;
-                                ids.add(new Valor(id, type));
-                            }
-                        }
-                        break;
-                    }
-
-                    case "declaracion y asignacion expresión":
-                    case "declaracion y asignacion":
-                    case "declaracion y asignacion por funcion": {
-                        String type = hijo.getHijo(0).valor;
-                        for (Node nieto : hijo.getHijos()) {
-                            System.out.println(nieto);
-                            if (nieto.valor.equals("id")) {
-                                String id = nieto.getHijo(0).valor;
-                                ids.add(new Valor(id, type));
-                            } else if (nieto.valor.equals("expresión")) {
-
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        return ids;
-    }
-
-    private Ambitos CrearAmbito(Node Arbol, Ambitos padre) {
-        String nombre = Arbol.valor;
-        Ambitos ambito = new Ambitos(nombre);
-        if (padre != null) {
-            padre.addHijo(ambito);
-        }
-        ArrayList<Valor> ids = new ArrayList<>();
-        for (Node hijo : Arbol.getHijos()) {
-            switch (hijo.valor) {
-                case "Parametro":
-                case "Parametros": {
-                    if (hijo.valor.equals("Parametros")) {
-                        for (Node parametro : hijo.getHijos()) {
-                            String id = parametro.getHijo(1).getHijo(0).valor;
-                            String type = parametro.getHijo(0).valor;
-                            String tipo = parametro.getHijo(2).valor;
-                            boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
-                            if (!error) {
-                                Log("Error: Identificador %s ya declarado".formatted(id));
-                            }
-                        }
-                    } else {
-                        String id = hijo.getHijo(1).getHijo(0).valor;
-                        String type = hijo.getHijo(0).valor;
-                        String tipo = hijo.getHijo(2).valor;
-                        boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
-                        if (!error) {
-                            Log("Error: Identificador %s ya declarado".formatted(id));
-                        }
-                    }
-                    break;
-                }
-                case "Nombre de funcion":
-                case "Nombre de procedure": {
-                    nombre = hijo.getHijo(0).valor;
-                    ambito.NombreAmbito = nombre;
-                    break;
-                }
-
-                case "GLOBAL": {
-                    for (Node nieto : hijo.getHijos()) {
-                        switch (nieto.valor) {
-                            case "Procedure":
-                            case "Declaracion de funcion": {
-                                CrearAmbito(nieto, ambito);
-                            }
-                        }
-                    }
-                    ids = getAllIds(hijo);
-                    addValores(ambito, ids);
-                    break;
-                }
-                case "BODY": {
-                    checkBody(hijo, ambito);
-                    break;
-                }
-
-            }
-        }
-        return ambito;
-    }
-
-    private void checkBody(Node body, Ambitos ambito) {
-        for (Node hijo : body.getHijos()) {
-            switch (hijo.valor) {
-                case "else": {
-                    Node bodyFor = hijo.getHijo(0);
-                    checkBody(bodyFor, ambito);
-                    break;
-                }
-                case "declaración elsif":
-                case "declaración if": {
-                    Node expresion = hijo.getHijo(1).getHijo(0);
-                    if (expresion.valor.equals("id")) {
-                        expresion = hijo.getHijo(1);
-                    }
-                    Node bodyIf = hijo.getHijo(2);
-                    checkBody(bodyIf, ambito);
-                    checkBody(hijo, ambito);
-                    evaluarExpresion(expresion, ambito);
-                    break;
-                }
-                case "declaración ciclo for": {
-                    Node bodyFor = hijo.getHijo(1);
-                    checkBody(bodyFor, ambito);
-                    break;
-                }
-                case "declaración ciclo while": {
-                    Node expresion = hijo.getHijo(1).getHijo(0);
-                    Node bodyWhile = hijo.getHijo(2);
-                    checkBody(bodyWhile, ambito);
-                    evaluarExpresion(expresion, ambito);
-                    break;
-                }
-                case "declaración ciclo loop": {
-                    Node bodyLoop = hijo.getHijo(0);
-                    checkBody(bodyLoop, ambito);
-                    for (Node nieto : bodyLoop.getHijos()) {
-                        switch (nieto.valor) {
-                            case "Exit when": {
-                                Node expresion = nieto.getHijo(0).getHijo(0);
-                                evaluarExpresion(expresion, ambito);
-                            }
-                        }
-                    }
-                    break;
-                }
-//                            case "asignacion por llamada a funcion":
-                case "asignacion": {
-                    String id = hijo.getHijo(0).getHijo(0).valor;
-                    String type = hijo.getHijo(1).getHijo(0).valor;
-                    String value = hijo.getHijo(1).getHijo(0).getHijo(0).valor;
-                    Object valor = ambito.TablaSimbolos.get(id);
-                    if (valor != null) {
-                        ambito.TablaSimbolos.get(id);
-                        String IdType = ((Valor) valor).type;
-                        if (type.equals(IdType)) {
-                            ((Valor) valor).valor = value;
-                        } else {
-                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, type));
-                        }
-                    } else {
-                        Log("Error: Identificador %s no declarado".formatted(id));
-                    }
-                    break;
-                }
-                case "asignación expresión": {
-                    String id = hijo.getHijo(0).getHijo(0).valor;
-                    Object valor = ambito.TablaSimbolos.get(id);
-                    if (valor != null) {
-                        String type = ((Valor) valor).type;
-                        Node expresion = hijo.getHijo(1);
-                        String typeEx = "Type" + evaluarExpresion(expresion, ambito);
-                        if (!type.equals(typeEx)) {
-                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, typeEx));
-                        }
-                    } else {
-                        Log("Error: Identificador %s no declarado".formatted(id));
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    public void addValores(Ambitos ambito, ArrayList<Valor> ids) {
-        for (Valor id : ids) {
-            boolean error = ambito.agregarValor(id.id, id);
-            if (!error) {
-                Log("Error: Identificador %s ya declarado".formatted(id.id));
-            }
-        }
-    }
-
-    private String evaluarExpresion(Node expresion, Ambitos ambito) {
-        String E1 = expresion.getHijo(0).valor;
-        if (E1.equals("id")) {
-            String id = expresion.getHijo(0).getHijo(0).valor;
-            Object valor = ambito.TablaSimbolos.get(id);
-            if (valor != null) {
-                E1 = ((Valor) valor).type;
-                E1 = E1.replace("Type", "");
-            } else {
-                Log("Error: Identificador %s no declarado".formatted(id));
-                return "Unknown";
-            }
-        }
-        String E2 = expresion.getHijo(1).valor;
-        String E3 = "#";
-        if (expresion.getHijos().size() == 3) {
-            E3 = expresion.getHijo(2).valor;
-        }
-        String tipoRet = "Error";
-        if (!E1.equals("#") && E2.equals("#") && E3.equals("#")) {
-            return E1;
-        }
-
-        if (!E1.equals("#") && !E2.equals("#") && E3.equals("#")) {
-            String tipoExpresion = evaluarExpresion(expresion.getHijo(1), ambito);
-            if (!E1.equals(tipoExpresion)) {
-                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E2, tipoExpresion));
-            }
-            return tipoExpresion;
-        }
-
-        if (!E1.equals("#") && E2.equals("#") && !E3.equals("#")) {
-            String tipoExpresion = evaluarExpresion(expresion.getHijo(2), ambito);
-            if (!E1.equals(tipoExpresion)) {
-                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E3, tipoExpresion));
-            }
-            return tipoExpresion;
-        }
-        return tipoRet;
-
-    }
-
-    private void Log(String log) {
-        semanticErrors++;
-        logs += log + "\n";
-    }
-
+    // <editor-fold defaultstate="collapsed" desc="Compiladores I">   
     private void analizadorSintactico() throws IOException {
 
         String codigo = editorCodigo.getText();
@@ -1482,7 +1180,7 @@ public class Main extends javax.swing.JFrame {
             s.parse();
             consola.setText("");
             if (Sintax.errors == 0 && LexerCup.errors == 0) {
-                CrearTablas(Sintax.Arbol, null);
+                analizarSemantico(Sintax.Arbol);
                 if (semanticErrors == 0) {
                     consola.setText("Análisis finalizado exitosamente");
                     consola.setForeground(new Color(25, 111, 61));
@@ -1582,6 +1280,469 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
+    private DefaultMutableTreeNode TransformToJTree(Node Arbol) {
+        DefaultMutableTreeNode nodo = new DefaultMutableTreeNode(Arbol.toString());
+        if (!Arbol.esHoja()) {
+            for (Node hijo : Arbol.getHijos()) {
+                nodo.add(TransformToJTree(hijo));
+            }
+        }
+        return nodo;
+    }
+// </editor-fold>
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(() -> {
+            new Main().setVisible(true);
+        });
+    }
+
+    private void analizarSemantico(Node Arbol) {
+        if (!Arbol.esHoja()) {
+            ambitos = CrearAmbito(Arbol, null);
+        }
+    }
+
+    private void codigoIntermedio(Node Arbol) {
+
+    }
+
+    private void addAllIds(Node arbol, Ambitos ambito) {
+        if (!arbol.esHoja()) {
+            for (Node hijo : arbol.getHijos()) {
+                switch (hijo.valor) {
+                    case "declaracion de variable simple":
+                    case "Declaracion": {
+                        String type = hijo.getHijo(0).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            if (nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                boolean error = ambito.agregarValor(id, new Valor(id, type));
+                                if (!error) {
+                                    Log("Error: Identificador %s ya declarado".formatted(id));
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                    case "declaracion y asignacion por funcion": {
+                        String type = hijo.getHijo(0).valor;
+                        String funcId = hijo.getHijo(hijo.getHijos().size() - 1).getHijo(0).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            if (nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                boolean error = ambito.agregarValor(id, new Valor(id, type));
+                                if (!error) {
+                                    Log("Error: Identificador %s ya declarado".formatted(id));
+                                }
+                            }
+                        }
+                        String parametros = "";
+                        for (int i = 0; i < hijo.getHijo(hijo.getHijos().size() - 1).getHijos().size(); i++) {
+                            Node nieto = hijo.getHijo(hijo.getHijos().size() - 1).getHijos().get(i);
+                            if (nieto.valor.equals("id")) {
+                                String paramId = nieto.getHijo(0).valor;
+                                Object valor2 = ambito.TablaSimbolos.get(paramId);
+                                if (valor2 != null) {
+                                    String paramIdType = ((Valor) valor2).type;
+                                    parametros += paramIdType + ((i == hijo.getHijo(hijo.getHijos().size() - 1).getHijos().size() - 1) ? "" : "X");
+                                } else {
+                                    Log("Error: Identificador %s no declarado".formatted(paramId));
+                                }
+                            }
+                        }
+                        if (parametros.equals("")) {
+                            parametros = "TypeNull";
+                        }
+                        parametros += "->" + type;
+                        Object func = ambito.TablaFunciones.get("%s|%s".formatted(funcId, parametros));
+                        if (func == null) {
+                            Log("Error: La funcion %s con la forma %s no existe".formatted(funcId, parametros));
+                        }
+                        break;
+                    }
+                    case "declaracion y asignacion": {
+                        String type = hijo.getHijo(0).valor;
+                        String rightId = "";
+                        String idsString = "";
+                        for (int i = 0; i < hijo.getHijos().size(); i++) {
+                            Node nieto = hijo.getHijos().get(i);
+                            if (i != hijo.getHijos().size() - 1 && nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                boolean error = ambito.agregarValor(id, new Valor(id, type));
+                                if (!error) {
+                                    Log("Error: Identificador %s ya declarado".formatted(id));
+                                }
+                                idsString += "%s ".formatted(id);
+                            } else {
+                                rightId = hijo.getHijo(hijo.getHijos().size() - 1).getHijo(0).valor;
+                            }
+                        }
+                        Object valor = ambito.TablaSimbolos.get(rightId);
+                        if (valor != null) {
+                            if (!((Valor) valor).type.equals(type)) {
+                                Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(idsString, ((Valor) valor).type));
+                            }
+                        } else {
+                            Log("Error: Identificador %s no declarado".formatted(rightId));
+                        }
+                        break;
+                    }
+                    case "declaracion y asignacion expresión": {
+                        String type = hijo.getHijo(0).valor;
+                        String expType = "";
+                        String idsString = "";
+                        for (Node nieto : hijo.getHijos()) {
+                            switch (nieto.valor) {
+                                case "id": {
+                                    String id = nieto.getHijo(0).valor;
+                                    boolean error = ambito.agregarValor(id, new Valor(id, type));
+                                    if (!error) {
+                                        Log("Error: Identificador %s ya declarado".formatted(id));
+                                    }
+                                    idsString += "%s ".formatted(id);
+                                    break;
+                                }
+                                case "expresión": {
+                                    expType = "Type" + evaluarExpresion(nieto, ambito);
+
+                                }
+                            }
+                        }
+
+                        if (!type.equals(expType)) {
+                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(idsString, expType));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private Ambitos CrearAmbito(Node Arbol, Ambitos padre) {
+        String nombre = Arbol.valor;
+        Ambitos ambito = new Ambitos(nombre);
+        if (padre != null) {
+            padre.addHijo(ambito);
+        }
+        ArrayList<Valor> ids = new ArrayList<>();
+        boolean isFunc = false;
+        for (Node hijo : Arbol.getHijos()) {
+            switch (hijo.valor) {
+                case "Parametro":
+                case "Parametros": {
+                    if (hijo.valor.equals("Parametros")) {
+                        for (Node parametro : hijo.getHijos()) {
+                            String type = parametro.getHijo(0).valor;
+                            String tipo = parametro.getHijo(parametro.getHijos().size() - 1).valor;
+                            for (Node nieto : parametro.getHijos()) {
+                                if (nieto.valor.equals("id")) {
+                                    String id = nieto.getHijo(0).valor;
+                                    boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
+                                    if (!error) {
+                                        Log("Error: Identificador %s ya declarado".formatted(id));
+                                    }
+                                }
+                            }
+
+                        }
+                    } else {
+                        String type = hijo.getHijo(0).valor;
+                        String tipo = hijo.getHijo(hijo.getHijos().size() - 1).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            if (nieto.valor.equals("id")) {
+                                String id = nieto.getHijo(0).valor;
+                                boolean error = ambito.agregarValor(id, new Valor(id, type, tipo));
+                                if (!error) {
+                                    Log("Error: Identificador %s ya declarado".formatted(id));
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                case "Nombre de funcion":
+                case "Nombre de procedure": {
+                    isFunc = hijo.valor.equals("Nombre de funcion");
+                    nombre = hijo.getHijo(0).valor;
+                    ambito.NombreAmbito = nombre;
+                    break;
+                }
+
+                case "GLOBAL": {
+                    for (Node nieto : hijo.getHijos()) {
+                        switch (nieto.valor) {
+                            case "Procedure":
+                            case "Declaracion de funcion": {
+                                if (nieto.valor.equals("Declaracion de funcion")) {
+                                    CrearFuncion(nieto, ambito);
+                                }
+
+                                CrearAmbito(nieto, ambito);
+                            }
+                        }
+                    }
+                    addAllIds(hijo, ambito);
+                    break;
+                }
+                case "BODY": {
+                    checkBody(hijo, ambito, isFunc);
+                    break;
+                }
+
+            }
+        }
+        return ambito;
+    }
+
+    private void CrearFuncion(Node funcion, Ambitos ambito) {
+        Funcion f = new Funcion();
+        ArrayList<String> Params = new ArrayList<>();
+        for (Node hijo : funcion.getHijos()) {
+            switch (hijo.valor) {
+                case "Parametro":
+                case "Parametros": {
+                    if (hijo.valor.equals("Parametros")) {
+                        for (Node parametro : hijo.getHijos()) {
+                            String type = parametro.getHijo(0).valor;
+                            for (Node nieto : parametro.getHijos()) {
+                                if (nieto.valor.equals("id")) {
+                                    Params.add(type);
+                                }
+                            }
+                        }
+                    } else {
+                        String type = hijo.getHijo(0).valor;
+                        for (Node nieto : hijo.getHijos()) {
+                            if (nieto.valor.equals("id")) {
+                                Params.add(type);
+                            }
+                        }
+                    }
+                    break;
+                }
+                case "Nombre de funcion": {
+                    String id = hijo.getHijo(0).valor;
+                    f.id = id;
+                    break;
+                }
+                case "TypeInteger":
+                case "TypeBoolean":
+                case "TypeFloat": {
+                    f.tipo = hijo.valor;
+                    break;
+                }
+            }
+        }
+        String parametros = "";
+        for (int i = 0; i < Params.size(); i++) {
+            String Param = Params.get(i);
+            parametros += Param + ((i == Params.size() - 1) ? "" : "X");
+        }
+        if (Params.isEmpty()) {
+            parametros = "TypeNull";
+        }
+        parametros += "->%s".formatted(f.tipo);
+        f.type = parametros;
+        boolean error = ambito.agregarFuncion("%s|%s".formatted(f.id, parametros), f);
+        if (!error) {
+            Log("Error: La funcion %s con la forma %s ya ha sido declarada".formatted(f.id, parametros));
+        }
+    }
+
+    private void checkBody(Node body, Ambitos ambito, boolean isFunction) {
+        for (Node hijo : body.getHijos()) {
+            switch (hijo.valor) {
+                case "else": {
+                    Node bodyFor = hijo.getHijo(0);
+                    checkBody(bodyFor, ambito, isFunction);
+                    break;
+                }
+                case "declaración elsif":
+                case "declaración if": {
+                    Node expresion = hijo.getHijo(1).getHijo(0);
+                    if (expresion.valor.equals("id")) {
+                        expresion = hijo.getHijo(1);
+                    }
+                    Node bodyIf = hijo.getHijo(2);
+                    checkBody(bodyIf, ambito, isFunction);
+                    checkBody(hijo, ambito, isFunction);
+                    evaluarExpresion(expresion, ambito);
+                    break;
+                }
+                case "declaración ciclo for": {
+                    Node bodyFor = hijo.getHijo(1);
+                    checkBody(bodyFor, ambito, isFunction);
+                    break;
+                }
+                case "declaración ciclo while": {
+                    Node expresion = hijo.getHijo(1).getHijo(0);
+                    Node bodyWhile = hijo.getHijo(2);
+                    checkBody(bodyWhile, ambito, isFunction);
+                    evaluarExpresion(expresion, ambito);
+                    break;
+                }
+                case "declaración ciclo loop": {
+                    Node bodyLoop = hijo.getHijo(0);
+                    checkBody(bodyLoop, ambito, isFunction);
+                    for (Node nieto : bodyLoop.getHijos()) {
+                        switch (nieto.valor) {
+                            case "Exit when": {
+                                Node expresion = nieto.getHijo(0).getHijo(0);
+                                evaluarExpresion(expresion, ambito);
+                            }
+                        }
+                    }
+                    break;
+                }
+                case "Return": {
+                    if (!isFunction) {
+                        Log("Error: Return inesperado");
+                    }
+                    break;
+                }
+                case "asignacion por llamada a funcion": {
+                    String id = hijo.getHijo(0).getHijo(0).valor;
+                    String funcId = hijo.getHijo(1).getHijo(0).valor;
+                    Object valor = ambito.TablaSimbolos.get(id);
+                    if (valor != null) {
+                        String IdType = ((Valor) valor).type;
+                        String parametros = "";
+                        for (int i = 0; i < hijo.getHijo(1).getHijos().size(); i++) {
+                            Node nieto = hijo.getHijo(1).getHijos().get(i);
+                            if (nieto.valor.equals("id")) {
+                                String paramId = nieto.getHijo(0).valor;
+                                Object valor2 = ambito.TablaSimbolos.get(paramId);
+                                if (valor2 != null) {
+                                    String paramIdType = ((Valor) valor2).type;
+                                    parametros += paramIdType + ((i == hijo.getHijo(1).getHijos().size() - 1) ? "" : "X");
+                                } else {
+                                    Log("Error: Identificador %s no declarado".formatted(paramId));
+                                }
+                            }
+                        }
+                        if (parametros.equals("")) {
+                            parametros = "TypeNull";
+                        }
+                        parametros += "->" + IdType;
+                        Object func = ambito.TablaFunciones.get("%s|%s".formatted(funcId, parametros));
+                        if (func == null) {
+                            Log("Error: La funcion %s con la forma %s no existe".formatted(funcId, parametros));
+                        }
+                    } else {
+                        Log("Error: Identificador %s no declarado".formatted(id));
+                    }
+
+                    break;
+                }
+                case "asignacion": {
+                    String id = hijo.getHijo(0).getHijo(0).valor;
+                    String type = hijo.getHijo(1).getHijo(0).valor;
+                    String value = hijo.getHijo(1).getHijo(0).getHijo(0).valor;
+                    Object valor = ambito.TablaSimbolos.get(id);
+                    if (valor != null) {
+                        ambito.TablaSimbolos.get(id);
+                        String IdType = ((Valor) valor).type;
+                        if (type.equals(IdType)) {
+                            ((Valor) valor).valor = value;
+                        } else {
+                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, type));
+                        }
+                    } else {
+                        Log("Error: Identificador %s no declarado".formatted(id));
+                    }
+                    break;
+                }
+                case "asignación expresión": {
+                    String id = hijo.getHijo(0).getHijo(0).valor;
+                    Object valor = ambito.TablaSimbolos.get(id);
+                    if (valor != null) {
+                        String type = ((Valor) valor).type;
+                        Node expresion = hijo.getHijo(1);
+                        String typeEx = "Type" + evaluarExpresion(expresion, ambito);
+                        if (!type.equals(typeEx)) {
+                            Log("Error: Type Mismatch %s no esperaba una asignación de tipo %s".formatted(id, typeEx));
+                        }
+                    } else {
+                        Log("Error: Identificador %s no declarado".formatted(id));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private String evaluarExpresion(Node expresion, Ambitos ambito) {
+        String E1 = expresion.getHijo(0).valor;
+        if (E1.equals("id")) {
+            String id = expresion.getHijo(0).getHijo(0).valor;
+            Object valor = ambito.TablaSimbolos.get(id);
+            if (valor != null) {
+                E1 = ((Valor) valor).type;
+                E1 = E1.replace("Type", "");
+            } else {
+                Log("Error: Identificador %s no declarado".formatted(id));
+                return "Unknown";
+            }
+        }
+        String E2 = expresion.getHijo(1).valor;
+        String E3 = "#";
+        if (expresion.getHijos().size() == 3) {
+            E3 = expresion.getHijo(2).valor;
+        }
+        String tipoRet = "Error";
+        if (!E1.equals("#") && E2.equals("#") && E3.equals("#")) {
+            return E1;
+        }
+
+        if (!E1.equals("#") && !E2.equals("#") && E3.equals("#")) {
+            String tipoExpresion = evaluarExpresion(expresion.getHijo(1), ambito);
+            if (!E1.equals(tipoExpresion)) {
+                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E2, tipoExpresion));
+            }
+            return tipoExpresion;
+        }
+
+        if (!E1.equals("#") && E2.equals("#") && !E3.equals("#")) {
+            String tipoExpresion = evaluarExpresion(expresion.getHijo(2), ambito);
+            if (!E1.equals(tipoExpresion)) {
+                Log("Error: Type Mismatch no se espera una operación %s %s %s".formatted(E1, E3, tipoExpresion));
+            }
+            return tipoExpresion;
+        }
+        return tipoRet;
+
+    }
+
+    private void Log(String log) {
+        semanticErrors++;
+        logs += log + "\n";
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="Generated Variables">   
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel FileIconPanel;
     private javax.swing.JPanel FileIconPanel1;
@@ -1685,6 +1846,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JPanel panelEditorCodigo;
     private javax.swing.JLabel runButtonLabel;
     // End of variables declaration//GEN-END:variables
+    // </editor-fold>
     public static Node root;
     public static Ambitos ambitos;
     public static String logs = "";

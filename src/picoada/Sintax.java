@@ -1794,7 +1794,7 @@ class CUP$Sintax$actions {
 		
     Node valor = new Node(""+b,parser.token);
     parser.token++;
-
+    RESULT = valor;
 
               CUP$Sintax$result = parser.getSymbolFactory().newSymbol("RETORNO",43, ((java_cup.runtime.Symbol)CUP$Sintax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Sintax$stack.peek()), RESULT);
             }
