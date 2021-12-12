@@ -402,7 +402,7 @@ DECLARACION_EXPRESION ::= MULT_IDS:ide DosPuntos TYPE:t asignacion NODE_EXPRESIO
             num = temp.getHijo(0).getValor();
             id1 = temp.getHijo(1).getValor();
             id2 = temp.getHijo(2).getValor();
-            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
+            if(id1.equals("#") && id2.equals("#") && (num.equals("Integer") || num.equals("Float"))){
                 Node newNode = new Node("valor",temp.getID());
                 newNode.addHijo(temp.getHijo(0));
                 decl.addHijo(newNode);
@@ -597,7 +597,7 @@ ASIGNAREXPREION ::= Id:c asignacion NODE_EXPRESION:n PuntoComa
             num = temp.getHijo(0).getValor();
             id1 = temp.getHijo(1).getValor();
             id2 = temp.getHijo(2).getValor();
-            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
+            if(id1.equals("#") && id2.equals("#") && ( num.equals("Integer") || num.equals("Float") )){
                 Node newNode = new Node("valor",temp.getID());
                 newNode.addHijo(temp.getHijo(0));
                 decl.addHijo(newNode);

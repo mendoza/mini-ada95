@@ -920,7 +920,7 @@ class CUP$Sintax$actions {
             num = temp.getHijo(0).getValor();
             id1 = temp.getHijo(1).getValor();
             id2 = temp.getHijo(2).getValor();
-            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
+            if(id1.equals("#") && id2.equals("#") && (num.equals("Integer") || num.equals("Float"))){
                 Node newNode = new Node("valor",temp.getID());
                 newNode.addHijo(temp.getHijo(0));
                 decl.addHijo(newNode);
@@ -1189,7 +1189,7 @@ class CUP$Sintax$actions {
             num = temp.getHijo(0).getValor();
             id1 = temp.getHijo(1).getValor();
             id2 = temp.getHijo(2).getValor();
-            if(id1.equals("#") && id2.equals("#") && num.equals("num") ){
+            if(id1.equals("#") && id2.equals("#") && ( num.equals("Integer") || num.equals("Float") )){
                 Node newNode = new Node("valor",temp.getID());
                 newNode.addHijo(temp.getHijo(0));
                 decl.addHijo(newNode);
