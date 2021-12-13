@@ -94,6 +94,8 @@ terminal
     Id,
     OperadorSuma,
     OperadorMultiplicacion,
+    OperadorDivision,
+    OperadorExponencial,
     asignacion,
     DosPuntos,
     PuntoComa,
@@ -169,6 +171,7 @@ non terminal
 
 precedence left OperadorSuma;
 precedence left OperadorMultiplicacion;
+precedence left OperadorDivision;
 precedence left and;
 precedence left or;
 
@@ -915,9 +918,28 @@ RETORNO ::=  Boolean:b
     Node valor = new Node(""+b,parser.token);
     parser.token++;
     RESULT = valor;
-:} | NODE_EXPRESION: i
+:} | NODE_EXPRESION: n
 {:
-    RESULT = (Node)i; 
+    Node decl = new Node("expresión",  parser.token++);
+        // Asigno el valor
+        // Aquí valido si solo se le asigna un id o un número
+        Node temp = (Node)n;
+        if (temp.getHijos().size() == 3){
+            String id1, id2, num;
+            num = temp.getHijo(0).getValor();
+            id1 = temp.getHijo(1).getValor();
+            id2 = temp.getHijo(2).getValor();
+            if(id1.equals("#") && id2.equals("#") && ( num.equals("Integer") || num.equals("Float") )){
+                decl = temp.getHijo(0);
+            }else if (id1.equals("#") && id2.equals("#") && num.equals("id")){
+                decl = temp.getHijo(0);
+            }else{
+                decl.addHijo((Node)n);
+            }
+        }else{
+            decl.addHijo((Node)n);
+        }
+    RESULT = (Node)decl; 
 
 :}
 | LLAMADA_F :lf

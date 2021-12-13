@@ -45,6 +45,40 @@ public class Ambitos {
         }
     }
 
+    public Valor getValor(String key) {
+        if (this.TablaSimbolos.get(key) != null) {
+            return (Valor) this.TablaSimbolos.get(key);
+        } else {
+            Ambitos papa = this.padre;
+            while (papa != null) {
+                Object v = papa.getValor(key);
+                if (v != null) {
+                    return (Valor) v;
+                } else {
+                    papa = papa.padre;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Funcion getFuncion(String key) {
+        if (this.TablaFunciones.get(key) != null) {
+            return (Funcion) this.TablaFunciones.get(key);
+        } else {
+            Ambitos papa = this.padre;
+            while (papa != null) {
+                Object v = papa.getFuncion(key);
+                if (v != null) {
+                    return (Funcion) v;
+                } else {
+                    papa = papa.padre;
+                }
+            }
+        }
+        return null;
+    }
+
     public ArrayList<Ambitos> getHijos() {
         return hijos;
     }
