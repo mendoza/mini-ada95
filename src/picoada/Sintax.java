@@ -1808,7 +1808,7 @@ class CUP$Sintax$actions {
 		int nright = ((java_cup.runtime.Symbol)CUP$Sintax$stack.peek()).right;
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$Sintax$stack.peek()).value;
 		
-    Node decl = new Node("expresion",  parser.token++);
+    Node decl = new Node("expresión",  parser.token++);
         // Asigno el valor
         // Aquí valido si solo se le asigna un id o un número
         Node temp = (Node)n;
