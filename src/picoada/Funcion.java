@@ -5,6 +5,9 @@
  */
 package picoada;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  *
  * @author David
@@ -22,6 +25,12 @@ public class Funcion {
     Funcion(String id, String tipo) {
         this.id = id;
         this.tipo = tipo;
+    }
+    
+    public ArrayList<String> getParams (String x) {
+        String[] parametros = this.type.substring(0,type.indexOf("->")).split("X");
+        ArrayList<String> tempParams = new ArrayList<> (Arrays.asList(parametros));
+        return tempParams;
     }
 
     @Override

@@ -1473,7 +1473,41 @@ public class Main extends javax.swing.JFrame {
                 }
                 case "Declaracion de funcion": {
                     String id = node.getHijo(0).getHijo(0).getValor();
-                    cuadruplo.add(new Cuadruplo("Func", id, "", ""));
+                    ArrayList<String> Params = new ArrayList<>();
+                    for (Node hijo : node.getHijos()) {
+                        switch (hijo.valor) {
+                            case "Parametro":
+                            case "Parametros": {
+                                if (hijo.valor.equals("Parametros")) {
+                                    for (Node parametro : hijo.getHijos()) {
+                                        String type = parametro.getHijo(0).valor;
+                                        for (Node nieto : parametro.getHijos()) {
+                                            if (nieto.valor.equals("id")) {
+                                                Params.add(type);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    String type = hijo.getHijo(0).valor;
+                                    for (Node nieto : hijo.getHijos()) {
+                                        if (nieto.valor.equals("id")) {
+                                            Params.add(type);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    String parametros = "";
+                    for (int i = 0; i < Params.size(); i++) {
+                        String Param = Params.get(i);
+                        parametros += Param + ((i == Params.size() - 1) ? "" : "X");
+                    }
+                    if (Params.isEmpty()) {
+                        parametros = "TypeNull";
+                    }
+                    cuadruplo.add(new Cuadruplo("Func", "%s|%s".formatted(id, parametros), "", ""));
                     for (Node n : node.getHijos()) {
                         intermedio(n);
                     }
@@ -1542,6 +1576,22 @@ public class Main extends javax.swing.JFrame {
                     cuadruplo.add(new Cuadruplo("IF", finalTemp, "", node.getHijo(1).getVerdadero()));
                     cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getVerdadero(), "", ""));
                     intermedio(node.getHijo(2));
+                    cuadruplo.add(new Cuadruplo("GOTO", node.getComienzo(), "", ""));
+                    break;
+                }
+                case "declaración ciclo loop": {
+                    node.setComienzo(nuevaEtiqueta());
+                    for (int i = 0; i < node.getHijo(0).getHijos().size(); i++) {
+                        if (node.getHijo(0).getHijo(i).valor.equals("exit when")) {
+                            node.getHijo(0).getHijo(i).getHijo(0).setVerdadero(nuevaEtiqueta());
+                            node.getHijo(0).getHijo(i).getHijo(0).setFalso(node.padre.getSiguiente());
+                            cuadruplo.add(new Cuadruplo("ETIQ", node.getComienzo(), "", ""));
+                            String finalTemp = intermedioAritmetica(node.getHijo(0).getHijo(i).getHijo(0), ambitos);
+                            cuadruplo.add(new Cuadruplo("IF", finalTemp, "", node.getHijo(0).getHijo(i).getHijo(0).getVerdadero()));
+                            cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(0).getHijo(i).getHijo(0).getVerdadero(), "", ""));
+                        }
+                    }
+                    intermedio(node.getHijo(0));
                     cuadruplo.add(new Cuadruplo("GOTO", node.getComienzo(), "", ""));
                     break;
                 }
@@ -1654,6 +1704,465 @@ public class Main extends javax.swing.JFrame {
             }
         }
 
+    }
+
+    public static Funcion getFuncion() {
+
+    }
+
+    public static void codigoFinal() {
+        ArrayList<Temporal> temporales = new ArrayList();
+        ArrayList<Temporal> parametros = new ArrayList();
+
+        ArrayList<String> msg = new ArrayList<>();
+        int arg = 0;
+        int contA = 0;
+        int contP = 0;
+        for (int i = 0; i < cont_temp; i++) {
+            temporales.add(new Temporal(i, "", false));
+        }
+        String codigoFinal = "";
+        String ambitoActual = "";
+        String ambito_siguiente = "";
+        codigoFinal += ".data\n";
+
+        codigoFinal += "   .text\n"
+                + "   .globl main\n";
+
+        for (Cuadruplo currentCuadruplo : cuadruplo) {
+            switch (currentCuadruplo.getOperador()) {
+                case "Func":
+                    ambito_siguiente = currentCuadruplo.getArgumento1();
+                    parametros.clear();
+                    if (currentCuadruplo.getArgumento1().equals("main")) {
+                        codigoFinal += "main:\n";
+                        codigoFinal += "       move $fp, $sp\n";
+                    } else {
+                        int pila = 8;
+                        int cont = 0;
+                        codigoFinal += "_" + currentCuadruplo.getArgumento1() + ":\n";
+                        codigoFinal += "       sw $fp, -4($sp)\n";
+                        codigoFinal += "       sw $ra, -8($sp)\n";
+                        Funcion funcion = getFuncion(ambito_siguiente);
+                        if (funcion.getParams().size() > 4) {
+                            for (int i = 4; i < funcion.getParams().size(); i++) {
+                                if (funcion.getParams().get(i).getTipo().equals("booleano") || funcion.getParams().get(i).getTipo().equals("caracter")) {
+                                    pila++;
+                                    codigoFinal += "       sw $s" + cont + ", -" + pila + "($sp)\n";
+                                } else {
+                                    pila += 4;
+                                    codigoFinal += "       sw $s" + cont + ", -" + pila + "($sp)\n";
+                                }
+                                cont++;
+                            }
+                        }
+                    }
+                    break;
+                case "Param":
+                    if (currentCuadruplo.getArgumento1().contains("'") || currentCuadruplo.getArgumento1().matches("[0-9]+")) {
+                        if (arg >= 4) {
+                            int temp = 0;
+                            for (int i = 0; i < temporales.size(); i++) {
+                                if (!temporales.get(i).isVivo()) {
+                                    temp = i;
+                                    break;
+                                }
+                            }
+                            codigoFinal += "       li $t" + temp + ", " + currentCuadruplo.getArgumento1() + "\n";
+                            if (currentCuadruplo.getArgumento1().contains("'")) {
+                                contA += 1;
+                                codigoFinal += "       sb $t" + temp + ", -" + contA + "($sp)\n";
+                            } else {
+                                contA += 4;
+                                codigoFinal += "       sw $t" + temp + ", -" + contA + "($sp)\n";
+                            }
+                        } else {
+                            codigoFinal += "       li $a" + arg + ", " + currentCuadruplo.getArgumento1() + "\n";
+                        }
+                    } else {
+                        if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                            int par = getParamIndex(parametros, currentCuadruplo.getArgumento1());
+                            if (isParameter(currentCuadruplo.getArgumento1(), codigoFinal)) {
+                                if (arg >= 4) {
+                                    if (parametros.get(par).getTipo().equals("caracter")) {
+                                        contA += 1;
+                                        codigoFinal += "       sb $s" + par + ", -" + contA + "($sp)\n";
+                                    } else {
+                                        contA += 4;
+                                        codigoFinal += "       sw $s" + par + ", -" + contA + "($sp)\n";
+                                    }
+                                } else {
+                                    codigoFinal += "       move $a" + arg + ", $s" + par + "($sp)\n";
+                                }
+                            } else {
+                                int temp = 0;
+                                for (int i = 0; i < temporales.size(); i++) {
+                                    temp = i;
+                                    break;
+                                }
+                                if (isCharacter(currentCuadruplo.getArgumento1())) {
+                                    if (arg >= 4) {
+                                        contA += 1;
+                                        codigoFinal += "       lb $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                        codigoFinal += "       sb $t" + temp + ", -" + contA + "($sp)\n";
+                                    } else {
+                                        codigoFinal += "       lb $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    }
+                                } else {
+                                    if (arg >= 4) {
+                                        contA += 4;
+                                        codigoFinal += "       lw $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                        codigoFinal += "       sw $t" + temp + ", -" + contA + "($sp)\n";
+                                    } else {
+                                        codigoFinal += "       lw $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    }
+                                }
+                            }
+                        } else {
+                            if (arg >= 4) {
+                                int t = 0;
+                                for (int i = 0; i < temporales.size(); i++) {
+                                    if (!temporales.get(i).isVivo()) {
+                                        t = i;
+                                        break;
+                                    }
+                                }
+                                if (isCharacter(currentCuadruplo.getArgumento1())) {
+                                    contA += 1;
+                                    codigoFinal += "       lb $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                                    codigoFinal += "       sb $t" + t + ", -" + contA + "($sp)\n";
+                                } else {
+                                    contA += 4;
+                                    codigoFinal += "       lw $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                                    codigoFinal += "       sw $t" + t + ", -" + contA + "($sp)\n";
+                                }
+                            } else {
+                                codigoFinal += "       lw $a" + arg + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                            }
+                        }
+                    }
+                    arg++;
+                    break;
+                case "Ret":
+                    if (!ambito_siguiente.equals("main")) {
+                        if (currentCuadruplo.getArgumento1().contains("'") || currentCuadruplo.getArgumento1().matches("[0-9]+")) {
+                            codigoFinal += "       li $v0, " + currentCuadruplo.getArgumento1() + "\n";
+                        } else if (currentCuadruplo.getArgumento1().contains("#t")) {
+                            int tempRet = 0;
+                            for (int i = 0; i < temporales.size(); i++) {
+                                if (temporales.get(i).isVivo() && temporales.get(i).getActivado().equals(currentCuadruplo.getArgumento1())) {
+                                    tempRet = i;
+                                }
+                            }
+                            temporales.get(tempRet).setVivo(false);
+                            temporales.get(tempRet).setActivado("");
+                            codigoFinal += "       move $v0, $t" + tempRet + "\n";
+                        } else {
+                            if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                                if (isParameter(currentCuadruplo.getArgumento1(), ambito_siguiente)) {
+                                    codigoFinal += "       move $v0, $s" + getParamIndex(parametros, currentCuadruplo.getArgumento1()) + "\n";
+                                } else {
+                                    if (isCharacterFunc(currentCuadruplo.getArgumento1())) {
+                                        codigoFinal += "       lb $v0, -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    } else {
+                                        codigoFinal += "       lw $v0, -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    }
+                                }
+                            } else {
+                                int tempRet = 0;
+                                for (int i = 0; i < temporales.size(); i++) {
+                                    if (!temporales.get(i).isVivo()) {
+                                        tempRet = i;
+                                        break;
+                                    }
+                                }
+                                codigoFinal += "       lw $v0, _" + currentCuadruplo.getArgumento1() + "\n";
+                            }
+                        }
+                        codigoFinal += "       b _fin_" + ambito_siguiente + "\n";
+                    }
+                    break;
+                case "End":
+                    if (ambito_siguiente.equals("main")) {
+                        codigoFinal += "       li $v0,10\n"
+                                + "       syscall\n";
+                    } else {
+                        codigoFinal += "_fin_" + ambito_siguiente + ":\n"
+                                + "       move $sp, $fp\n"
+                                + "       lw $fp, -4($sp)\n"
+                                + "       lw $ra, -8($sp)\n";
+                        int contE = 0;
+                        int paramsE = getParamCount();
+                        Funcion fun = getFuncion(ambito_siguiente);
+                        if (paramsE > 4) {
+                            for (int i = 4; i < fun.getParams().size(); i++) {
+                                if (fun.getParams().get(i).getTipo().equals("caracter") || fun.getParams().get(i).getTipo().equals("booleano")) {
+                                    codigoFinal += "       lb $s" + contE + ", -" + fun.getParams().get(i).getOffset() + "($sp)\n";
+                                } else {
+                                    codigoFinal += "       lw $s" + contE + ", -" + fun.getParams().get(i).getOffset() + "($sp)\n";
+                                }
+                                contE++;
+                            }
+                        }
+                        codigoFinal += "       jr $ra\n";
+                    }
+                    break;
+                case "Call":
+                    int contadorVivos = 0;
+                    for (int i = 0; i < parametros.size(); i++) {
+                        if (parametros.get(i).isVivo()) {
+                            contadorVivos += 4;
+                            codigoFinal += "       sw $t" + i + ",-" + contadorVivos + "($sp)\n";
+                        }
+                    }
+                    if (contadorVivos > 0) {
+                        codigoFinal += "       sub $sp, $sp, " + contadorVivos + "\n";
+                    }
+                    codigoFinal += "       jal _" + currentCuadruplo.getArgumento1() + "\n";
+                    for (int i = parametros.size() - 1; i >= 0; i--) {
+                        if (parametros.get(i).isVivo()) {
+                            codigoFinal += "       lw $t" + i + ",0($sp)\n"
+                                    + "       add $sp,$sp,4\n";
+                        }
+                    }
+                    arg = 0;
+                    contA = 0;
+                    break;
+                case "ETIQ":
+                    codigoFinal += "_" + currentCuadruplo.getArgumento1() + ":\n";
+                    break;
+                case "GOTO":
+                    codigoFinal += "       b _" + currentCuadruplo.getArgumento1() + "\n";
+                    break;
+                case "Throwdown":
+                case "Throw":
+                    String tipo = "";
+                    codigoFinal += "\n       li $v0,";
+                    String var = currentCuadruplo.getArgumento1();
+                    if (mensajes.contains(var)) {
+                        codigoFinal += " 4"
+                                + "\n       la $a0, " + "_msg" + mensajes.indexOf(var)
+                                + "\n       syscall";
+                    } else if (isNumeric(var)) { // En caso de que sea un número
+                        codigoFinal += " 1"
+                                + "\n       li $a0, " + currentCuadruplo.getArgumento1()
+                                + "\n       syscall";
+                    } else if (var.equals("True")) { // En caso de que sea un booleano
+                        codigoFinal += " 1"
+                                + "\n       li $a0, " + 1
+                                + "\n       syscall";
+                    } else if (var.equals("False")) {  // En caso de que sea un booleano
+                        codigoFinal += " 1"
+                                + "\n       li $a0, " + 0
+                                + "\n       syscall";
+                    } else if ((tipo = getTipoVariableFinal(currentCuadruplo.getArgumento1(), "Start")) != null) { // Ver si la variable es global
+                        if (tipo.equals("entero")) {
+                            codigoFinal += " 1"
+                                    + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
+                                    + "\n       syscall";
+                        } else if (tipo.equals("booleano")) {
+                            codigoFinal += " 1"
+                                    + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
+                                    + "\n       syscall";
+                        } else if (tipo.equals("caracter")) {
+                            codigoFinal += " 4"
+                                    + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
+                                    + "\n       syscall";
+                        }
+                    } else if ((tipo = getTipoVariable(currentCuadruplo.getArgumento1(), ambito_siguiente)) != null) { // Ver si es variable local
+
+                    }
+                    break;
+                case "catch":
+                    tipo = "";
+                    codigoFinal += "\n       li $v0,";
+                    var = currentCuadruplo.getArgumento1();
+                    if ((tipo = getTipoVariableFinal(currentCuadruplo.getArgumento1(), "Start")) != null) { // Ver si la variable es global
+                        if (tipo.equals("entero")) {
+                            codigoFinal += " 1"
+                                    + "\n       syscall"
+                                    + "\n       sw $v0, _" + currentCuadruplo.getArgumento1() + "\n";
+                        } else if (tipo.equals("caracter")) {
+                            codigoFinal += " 12"
+                                    + "\n       syscall"
+                                    + "\n       sw $v0, _" + currentCuadruplo.getArgumento1();
+                        }
+                    }
+                    break;
+                case "=":
+                    /*String num = "[0-9]+";
+                    boolean pass = false;
+                    int asig = 0;
+                    int temp = 0;
+                    for (int i = 0; i < 10; i++) {
+                        if (temporales.get(i).isVivo() && temporales.get(i).getActivado().equals(currentCuadruplo.getArgumento1())) {
+                            asig = i;
+                            pass = true;
+                        }
+                    }
+                    for (int i = 0; i < 10; i++) {
+                        if (!temporales.get(i).isVivo()) {
+                            temp = i;
+                            break;
+                        }
+                    }
+                    if (pass) {
+                        if (isLocalVariable(currentCuadruplo.getResultado())) {
+                            if (isParameter(currentCuadruplo.getResultado(), ambito_siguiente)) {
+                                int par = getParamIndex(parametros, currentCuadruplo.getResultado());
+                                codigoFinal += "       move $s" + par + ", $t" + asig + "\n";
+                            } else {
+                                if (isCharacterFunc(currentCuadruplo.getResultado())) {
+                                    codigoFinal += "       sb $t" + asig + ", -" + getOffsetVariable(currentCuadruplo.getResultado()) + "($fp)\n";
+                                } else {
+                                    codigoFinal += "       sw $t" + asig + ", -" + getOffsetVariable(currentCuadruplo.getResultado()) + "($fp)\n";
+                                }
+                            }
+                        } else {
+                            if (isCharacterFunc(currentCuadruplo.getResultado())) {
+                                codigoFinal += "       sb $t" + asig + ", _" + currentCuadruplo.getResultado() + "\n";
+                            } else {
+                                codigoFinal += "       sw $t" + asig + ", _" + currentCuadruplo.getResultado() + "\n";
+                            }
+                        }
+                        temporales.get(asig).setVivo(false);
+                        temporales.get(asig).setActivado("");
+                    } else if (currentCuadruplo.getArgumento1().matches(num)) {
+                        codigoFinal += "       li $t" + temp + ", " + currentCuadruplo.getArgumento1() + "\n";
+                        if (isLocalVariable(currentCuadruplo.getResultado())) {
+                            if (isParameter(currentCuadruplo.getResultado(), ambito_siguiente)) {
+                                int par = getParamIndex(parametros, currentCuadruplo.getResultado());
+                                codigoFinal += "       move $s" + par + ", $t" + temp + "\n";
+                            } else {
+                                codigoFinal += "       sw $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getResultado()) + "($fp)\n";
+                            }
+                        } else {
+                            codigoFinal += "       sw $t" + temp + ", _" + currentCuadruplo.getResultado() + "\n";
+                        }
+                    } else if (currentCuadruplo.getArgumento1().contains("'")) {
+                        codigoFinal += "       li $t" + temp + ", " + currentCuadruplo.getArgumento1() + "\n";
+                        if (isLocalVariable(currentCuadruplo.getResultado())) {
+                            if (isParameter(currentCuadruplo.getResultado(), ambito_siguiente)) {
+                                int par = getParamIndex(parametros, currentCuadruplo.getResultado());
+                                codigoFinal += "       move $s" + par + ", $t" + temp + "\n";
+                            } else {
+                                codigoFinal += "       sb $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getResultado()) + "($fp)\n";
+                            }
+                        } else {
+                            codigoFinal += "       sb $t" + temp + ", _" + currentCuadruplo.getResultado() + "\n";
+                        }
+                    } else if (currentCuadruplo.getArgumento1().equals("Ret")) {
+                        codigoFinal += "       move $t" + temp + ", $v0\n";
+                        temporales.get(temp).setVivo(true);
+                        temporales.get(temp).setActivado(currentCuadruplo.getResultado());
+                    } else {
+                        if (isLocalVariable(currentCuadruplo.getResultado())) {
+                            if (isParameter(currentCuadruplo.getResultado(), ambito_siguiente)) {
+                                int par = getParamIndex(parametros, currentCuadruplo.getResultado());
+                                codigoFinal += "       move $s" + par + ", $t" + temp + "\n";
+                            }
+                        } else {
+                        }
+                    }*/
+                    break;
+                default:
+                    if (currentCuadruplo.getOperador().contains("IF")) {
+                        String op = currentCuadruplo.getOperador().substring(2, currentCuadruplo.getOperador().length());
+                        int t_izq = 0;
+                        int t_der = 0;
+                        for (int i = 0; i < 10; i++) {
+                            if (!temporales.get(i).isVivo()) {
+                                t_izq = i;
+                                temporales.get(i).setVivo(true);
+                                break;
+                            }
+                        }
+                        for (int i = 0; i < 10; i++) {
+                            if (!temporales.get(i).isVivo()) {
+                                t_der = i;
+                                temporales.get(i).setVivo(true);
+                                break;
+                            }
+                        }
+                        if (currentCuadruplo.getArgumento1().matches("[0-9]+")) {
+                            codigoFinal += "       li $t" + t_izq + ", " + currentCuadruplo.getArgumento1() + "\n";
+                        } else {
+                            if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                                if (isParameter(currentCuadruplo.getArgumento1(), codigoFinal)) {
+                                    int par = getParamIndex(parametros, currentCuadruplo.getArgumento1());
+                                    codigoFinal += "       move $t" + t_izq + ", $s" + par + "\n";
+                                } else {
+                                    if (isCharacterFunc(currentCuadruplo.getArgumento1())) {
+                                        codigoFinal += "       lw $t" + t_izq + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                        codigoFinal += "       lw $t" + t_izq + ", 0($t" + t_izq + ")\n";
+                                    } else {
+                                        codigoFinal += "       lw $t" + t_izq + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    }
+                                }
+                            } else {
+                                if (isCharacterFunc(codigoFinal)) {
+                                    codigoFinal += "       lw $t" + t_izq + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                                    codigoFinal += "       lw $t" + t_izq + ", 0($f" + t_izq + ")\n";
+                                } else {
+                                    codigoFinal += "       lw $t" + t_izq + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                                }
+                            }
+                        }
+                        if (currentCuadruplo.getArgumento2().matches("[0-9]+")) {
+                            codigoFinal += "       li $t" + t_der + ", " + currentCuadruplo.getArgumento2() + "\n";
+                        } else {
+                            if (isLocalVariable(currentCuadruplo.getArgumento2())) {
+                                if (isParameter(currentCuadruplo.getArgumento2(), codigoFinal)) {
+                                    int par = getParamIndex(parametros, currentCuadruplo.getArgumento2());
+                                    codigoFinal += "       move $t" + t_der + ", $s" + par + "\n";
+                                } else {
+                                    if (isCharacterFunc(currentCuadruplo.getArgumento2())) {
+                                        codigoFinal += "       lw $t" + t_der + ", -" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "($fp)\n";
+                                        codigoFinal += "       lw $t" + t_der + ", 0($t" + t_der + ")\n";
+                                    } else {
+                                        codigoFinal += "       lw $t" + t_der + ", -" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "($fp)\n";
+                                    }
+
+                                }
+                            } else {
+                                if (isCharacterFunc(currentCuadruplo.getArgumento2())) {
+                                    codigoFinal += "       lw $t" + t_der + ", _" + currentCuadruplo.getArgumento2() + "\n";
+                                    codigoFinal += "       lw $t" + t_der + ", 0($t" + t_der + ")\n";
+                                } else {
+                                    codigoFinal += "       lw $t" + t_der + ", _" + currentCuadruplo.getArgumento2() + "\n";
+                                }
+                            }
+                        }
+                        switch (op) {
+                            case ">":
+                                codigoFinal += "       bgt $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            case "<":
+                                codigoFinal += "       blt $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            case ">=":
+                                codigoFinal += "       bge $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            case "<=":
+                                codigoFinal += "       ble $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            case "==":
+                                codigoFinal += "       beq $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            case "!=":
+                                codigoFinal += "       bne $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
+                                break;
+                            default:
+                                codigoFinal += "       nada\n";
+                        }
+                        temporales.get(t_izq).setVivo(false);
+                        temporales.get(t_der).setVivo(false);
+                    }
+
+            }
+        }
+
+        System.out.println(codigoFinal);
     }
 
     private void addAllIds(Node arbol, Ambitos ambito) {
@@ -1947,19 +2456,54 @@ public class Main extends javax.swing.JFrame {
                 case "declaración ciclo loop": {
                     Node bodyLoop = hijo.getHijo(0);
                     checkBody(bodyLoop, ambito, isFunction);
+                    boolean hasExit = false;
                     for (Node nieto : bodyLoop.getHijos()) {
                         switch (nieto.valor) {
                             case "Exit when": {
-                                Node expresion = nieto.getHijo(0).getHijo(0);
+                                Node expresion = nieto.getHijo(0);
                                 evaluarExpresion(expresion, ambito);
+                                hasExit = true;
                             }
                         }
+                    }
+                    if (!hasExit) {
+                        Log("Error: Loop sin condición de salida");
                     }
                     break;
                 }
                 case "Return": {
                     if (!isFunction) {
                         Log("Error: Return inesperado");
+                    }
+                    break;
+                }
+                case "Invocacion de la funcion sin parametros": {
+                    String id = hijo.getHijo(0).valor;
+                    Object f = ambito.getFuncionLLamada("%s|%s".formatted(id, "TypeNull"));
+                    if (f == null) {
+                        Log("Error: La funcion %s con parametros %s no existe".formatted(id, "TypeNull"));
+                    }
+                    break;
+                }
+                case "Invocacion de la funcion con parametros": {
+                    String id = hijo.getHijo(0).valor;
+                    String parametros = "";
+                    for (int i = 0; i < hijo.getHijos().size(); i++) {
+                        Node nieto = hijo.getHijos().get(i);
+                        if (nieto.valor.equals("id")) {
+                            String paramId = nieto.getHijo(0).valor;
+                            Object valor2 = ambito.getValor(paramId);
+                            if (valor2 != null) {
+                                String paramIdType = ((Valor) valor2).type;
+                                parametros += paramIdType + ((i == hijo.getHijos().size() - 1) ? "" : "X");
+                            } else {
+                                Log("Error: Identificador %s no declarado".formatted(paramId));
+                            }
+                        }
+                    }
+                    Object f = ambito.getFuncionLLamada("%s|%s".formatted(id, parametros));
+                    if (f == null) {
+                        Log("Error: La funcion %s con parametros %s no existe".formatted(id, parametros));
                     }
                     break;
                 }

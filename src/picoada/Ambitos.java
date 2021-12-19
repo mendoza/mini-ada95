@@ -20,6 +20,7 @@ public class Ambitos {
     public String NombreAmbito = "";
     public ArrayList<Ambitos> hijos = new ArrayList<>();
     public Ambitos padre;
+    public int offset = 0;
 
     Ambitos(String NombreAmbito) {
         this.NombreAmbito = NombreAmbito;
@@ -28,6 +29,16 @@ public class Ambitos {
     }
 
     public boolean agregarValor(String key, Valor value) {
+        int cur_offset = 0;
+        if (value.type.equals("TypeInteger")) {
+            cur_offset = 4;
+        } else if (value.type.equals("TypeFloat")) {
+            cur_offset = 8;
+        } else if (value.type.equals("TypeBoolean")) {
+            cur_offset = 1;
+        }
+        this.offset += cur_offset;
+        value.offset = cur_offset;
         if (this.TablaSimbolos.get(key) == null) {
             this.TablaSimbolos.put(key, value);
             return true;
@@ -74,6 +85,26 @@ public class Ambitos {
                 } else {
                     papa = papa.padre;
                 }
+            }
+        }
+        return null;
+    }
+
+    public Funcion getFuncionLLamada(String key) {
+        for (Object f : this.TablaFunciones.values()) {
+            Funcion F = (Funcion) f;
+            String id = "%s|%s".formatted(F.id, F.type.substring(0, F.type.indexOf("->")));
+            if (key.equals(id)) {
+                return F;
+            }
+        }
+        Ambitos papa = this.padre;
+        while (papa != null) {
+            Object v = papa.getFuncionLLamada(key);
+            if (v != null) {
+                return (Funcion) v;
+            } else {
+                papa = papa.padre;
             }
         }
         return null;
