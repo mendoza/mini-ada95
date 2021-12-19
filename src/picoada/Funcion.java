@@ -27,7 +27,7 @@ public class Funcion {
         this.tipo = tipo;
     }
     
-    public ArrayList<String> getParams (String x) {
+    public ArrayList<String> getParams () {
         String[] parametros = this.type.substring(0,type.indexOf("->")).split("X");
         ArrayList<String> tempParams = new ArrayList<> (Arrays.asList(parametros));
         return tempParams;

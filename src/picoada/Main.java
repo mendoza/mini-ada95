@@ -26,7 +26,8 @@ import javax.swing.tree.DefaultTreeModel;
 
 public class Main extends javax.swing.JFrame {
 
-    String adaCode = "";
+    String adaCode = "";        
+
 
     /**
      * Creates new form Main
@@ -1238,6 +1239,7 @@ public class Main extends javax.swing.JFrame {
                     cont_etiq = 0;
                     cuadruplo.clear();
                     intermedio(Sintax.Arbol);
+                    codigoFinal();
                     DefaultListModel demoList = new DefaultListModel();
                     for (Cuadruplo cuadruplo1 : cuadruplo) {
                         demoList.addElement(cuadruplo1);
@@ -1706,10 +1708,116 @@ public class Main extends javax.swing.JFrame {
 
     }
 
-    public static Funcion getFuncion() {
-
+    // Funcion para revisar la existencia de las funciones en una llamada "Tabla de funciones"
+    public static Funcion getFuncion(String key, Ambitos ambito) {
+        
+        Object fu = null;
+        
+        for (Object f: ambito.TablaFunciones.values()){
+            Funcion F = (Funcion) f;
+            String id = "%s|%s".formatted(F.id, F.type.substring(0, F.type.indexOf("->")));
+            
+            if (key.equals(id)) {
+                return F;
+            }
+            
+        } 
+        
+        for (Ambitos a: ambito.getHijos()){
+            Object aux = getFuncion(key, a);
+            
+            if (aux != null) {
+                return (Funcion)aux;
+            }
+        }
+        
+        return (Funcion)fu;
     }
+        // Funcion para revisar la existencia de las variable en una la tabla de simbolos 
+        public static Valor getVar(String key, Ambitos ambito) {
+        
+        
+        for (Object v: ambito.TablaSimbolos.values()){
+            Valor V = (Valor) v;
+            
+            if (V.id.equals(v)) {
+                return V;
+            }
+            
+        } 
+        
+        for (Ambitos a: ambito.getHijos()){
+            Object aux = getVar(key, a);
+            
+            if (aux != null) {
+                return (Valor)aux;
+            }
+        }
+        
+        return null;
+    }
+    
+        
+                // Funcion para revisar la existencia de las variable en una la tabla de simbolos 
+        public static Valor getTipoVar(String key, Ambitos ambito) {
+        
+        
+        for (Object v: ambito.TablaSimbolos.values()){
+            Valor V = (Valor) v;
+            
+            if (V.tipo.equals(v)) {
+                return V;
+            }
+            
+        } 
+        
+        for (Ambitos a: ambito.getHijos()){
+            Object aux = getVar(key, a);
+            
+            if (aux != null) {
+                return (Valor)aux;
+            }
+        }
+        
+        return null;
+    }
+    
+//    
+//    public static boolean isParameter(String variable, String ambito) {
+//        for (Funcion funcion : ambito) {
+//            if (funcion.getId().equals(ambito)) {
+//                params = funcion.getParams();
+//            }
+//        }
+//        for (Variables param : params) {
+//            if (param.getId().equals(variable)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
+    
+    public static boolean isLocalVariable(String var, Ambitos ambito) {
+        
+        Object aux1 = ambito.TablaSimbolos.get(var);
+            
+        if (aux1 != null && ambito.NombreAmbito.equals(ambito_siguiente)) {
+            return true;
+        }
+        
+        for (Ambitos a: ambito.getHijos()){
+            Object aux = a.TablaSimbolos.get(var);
+            
+            if (aux != null && a.NombreAmbito.equals(ambito_siguiente)) {
+                return true;
+            }else {
+                return isLocalVariable(var, a);
+            }
+        }
+        return false;
+    }
+        
     public static void codigoFinal() {
         ArrayList<Temporal> temporales = new ArrayList();
         ArrayList<Temporal> parametros = new ArrayList();
@@ -1718,17 +1826,17 @@ public class Main extends javax.swing.JFrame {
         int arg = 0;
         int contA = 0;
         int contP = 0;
-        for (int i = 0; i < cont_temp; i++) {
+        for (int i = 0; i < 10; i++) {
             temporales.add(new Temporal(i, "", false));
         }
         String codigoFinal = "";
         String ambitoActual = "";
-        String ambito_siguiente = "";
         codigoFinal += ".data\n";
 
         codigoFinal += "   .text\n"
                 + "   .globl main\n";
-
+        
+        
         for (Cuadruplo currentCuadruplo : cuadruplo) {
             switch (currentCuadruplo.getOperador()) {
                 case "Func":
@@ -1743,10 +1851,12 @@ public class Main extends javax.swing.JFrame {
                         codigoFinal += "_" + currentCuadruplo.getArgumento1() + ":\n";
                         codigoFinal += "       sw $fp, -4($sp)\n";
                         codigoFinal += "       sw $ra, -8($sp)\n";
-                        Funcion funcion = getFuncion(ambito_siguiente);
+                        // getFuncion encuentra la funcion por medio de su ID 
+                        Funcion funcion = getFuncion(ambito_siguiente, ambitos);
                         if (funcion.getParams().size() > 4) {
                             for (int i = 4; i < funcion.getParams().size(); i++) {
-                                if (funcion.getParams().get(i).getTipo().equals("booleano") || funcion.getParams().get(i).getTipo().equals("caracter")) {
+                                
+                                if (funcion.getParams().get(i).equals("TypeBooleano")) {
                                     pila++;
                                     codigoFinal += "       sw $s" + cont + ", -" + pila + "($sp)\n";
                                 } else {
@@ -1757,6 +1867,7 @@ public class Main extends javax.swing.JFrame {
                             }
                         }
                     }
+                    System.out.println(codigoFinal);
                     break;
                 case "Param":
                     if (currentCuadruplo.getArgumento1().contains("'") || currentCuadruplo.getArgumento1().matches("[0-9]+")) {
@@ -1780,9 +1891,9 @@ public class Main extends javax.swing.JFrame {
                             codigoFinal += "       li $a" + arg + ", " + currentCuadruplo.getArgumento1() + "\n";
                         }
                     } else {
-                        if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                        if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
                             int par = getParamIndex(parametros, currentCuadruplo.getArgumento1());
-                            if (isParameter(currentCuadruplo.getArgumento1(), codigoFinal)) {
+                            if (isParameter(currentCuadruplo.getArgumento1(), ambitos)) {
                                 if (arg >= 4) {
                                     if (parametros.get(par).getTipo().equals("caracter")) {
                                         contA += 1;
@@ -1800,24 +1911,15 @@ public class Main extends javax.swing.JFrame {
                                     temp = i;
                                     break;
                                 }
-                                if (isCharacter(currentCuadruplo.getArgumento1())) {
-                                    if (arg >= 4) {
-                                        contA += 1;
-                                        codigoFinal += "       lb $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                        codigoFinal += "       sb $t" + temp + ", -" + contA + "($sp)\n";
-                                    } else {
-                                        codigoFinal += "       lb $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                    }
+
+                                if (arg >= 4) {
+                                    contA += 4;
+                                    codigoFinal += "       lw $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
+                                    codigoFinal += "       sw $t" + temp + ", -" + contA + "($sp)\n";
                                 } else {
-                                    if (arg >= 4) {
-                                        contA += 4;
-                                        codigoFinal += "       lw $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                        codigoFinal += "       sw $t" + temp + ", -" + contA + "($sp)\n";
-                                    } else {
-                                        codigoFinal += "       lw $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                    }
+                                    codigoFinal += "       lw $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
                                 }
-                            }
+                                }
                         } else {
                             if (arg >= 4) {
                                 int t = 0;
@@ -1827,15 +1929,10 @@ public class Main extends javax.swing.JFrame {
                                         break;
                                     }
                                 }
-                                if (isCharacter(currentCuadruplo.getArgumento1())) {
-                                    contA += 1;
-                                    codigoFinal += "       lb $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                                    codigoFinal += "       sb $t" + t + ", -" + contA + "($sp)\n";
-                                } else {
-                                    contA += 4;
-                                    codigoFinal += "       lw $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                                    codigoFinal += "       sw $t" + t + ", -" + contA + "($sp)\n";
-                                }
+                                contA += 4;
+                                codigoFinal += "       lw $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                                codigoFinal += "       sw $t" + t + ", -" + contA + "($sp)\n";
+
                             } else {
                                 codigoFinal += "       lw $a" + arg + ", _" + currentCuadruplo.getArgumento1() + "\n";
                             }
@@ -1858,15 +1955,13 @@ public class Main extends javax.swing.JFrame {
                             temporales.get(tempRet).setActivado("");
                             codigoFinal += "       move $v0, $t" + tempRet + "\n";
                         } else {
-                            if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                            if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
                                 if (isParameter(currentCuadruplo.getArgumento1(), ambito_siguiente)) {
                                     codigoFinal += "       move $v0, $s" + getParamIndex(parametros, currentCuadruplo.getArgumento1()) + "\n";
                                 } else {
-                                    if (isCharacterFunc(currentCuadruplo.getArgumento1())) {
-                                        codigoFinal += "       lb $v0, -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                    } else {
+
                                         codigoFinal += "       lw $v0, -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                    }
+                                    
                                 }
                             } else {
                                 int tempRet = 0;
@@ -1893,7 +1988,7 @@ public class Main extends javax.swing.JFrame {
                                 + "       lw $ra, -8($sp)\n";
                         int contE = 0;
                         int paramsE = getParamCount();
-                        Funcion fun = getFuncion(ambito_siguiente);
+                        Funcion fun = getFuncion(ambito_siguiente, ambitos);
                         if (paramsE > 4) {
                             for (int i = 4; i < fun.getParams().size(); i++) {
                                 if (fun.getParams().get(i).getTipo().equals("caracter") || fun.getParams().get(i).getTipo().equals("booleano")) {
@@ -1934,50 +2029,46 @@ public class Main extends javax.swing.JFrame {
                 case "GOTO":
                     codigoFinal += "       b _" + currentCuadruplo.getArgumento1() + "\n";
                     break;
-                case "Throwdown":
-                case "Throw":
+                case "Putln":
+                case "Put":
                     String tipo = "";
                     codigoFinal += "\n       li $v0,";
                     String var = currentCuadruplo.getArgumento1();
-                    if (mensajes.contains(var)) {
-                        codigoFinal += " 4"
-                                + "\n       la $a0, " + "_msg" + mensajes.indexOf(var)
-                                + "\n       syscall";
-                    } else if (isNumeric(var)) { // En caso de que sea un número
+               
+                    Valor aux = getVar(var, ambitos);
+
+                    if (aux!=null && ( aux.type.equals("TypeInteger") || aux.tipo.equals("TypeFloat") )) { 
                         codigoFinal += " 1"
                                 + "\n       li $a0, " + currentCuadruplo.getArgumento1()
                                 + "\n       syscall";
-                    } else if (var.equals("True")) { // En caso de que sea un booleano
-                        codigoFinal += " 1"
-                                + "\n       li $a0, " + 1
-                                + "\n       syscall";
-                    } else if (var.equals("False")) {  // En caso de que sea un booleano
+
+                    } else if (aux!=null && aux.type.equals("TypeBoolean")) {  // En caso de que sea un booleano
                         codigoFinal += " 1"
                                 + "\n       li $a0, " + 0
                                 + "\n       syscall";
-                    } else if ((tipo = getTipoVariableFinal(currentCuadruplo.getArgumento1(), "Start")) != null) { // Ver si la variable es global
-                        if (tipo.equals("entero")) {
+                    } else if (aux!= null) { // Ver si la variable es global
+                        if (aux.type.equals("entero")) {
                             codigoFinal += " 1"
                                     + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
                                     + "\n       syscall";
-                        } else if (tipo.equals("booleano")) {
+                        } else if (aux.type.equals("booleano")) {
                             codigoFinal += " 1"
                                     + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
                                     + "\n       syscall";
-                        } else if (tipo.equals("caracter")) {
-                            codigoFinal += " 4"
-                                    + "\n       lw $a0, _" + currentCuadruplo.getArgumento1()
-                                    + "\n       syscall";
-                        }
-                    } else if ((tipo = getTipoVariable(currentCuadruplo.getArgumento1(), ambito_siguiente)) != null) { // Ver si es variable local
+                        } 
+                    } else if (aux != null) { // Ver si es variable local
 
                     }
                     break;
-                case "catch":
+                case "Get":
                     tipo = "";
                     codigoFinal += "\n       li $v0,";
+                                 
                     var = currentCuadruplo.getArgumento1();
-                    if ((tipo = getTipoVariableFinal(currentCuadruplo.getArgumento1(), "Start")) != null) { // Ver si la variable es global
+                    Valor aux1 = getVar(var, ambitos);
+                    
+                    
+                    if (aux1 != null) { // Ver si la variable es global
                         if (tipo.equals("entero")) {
                             codigoFinal += " 1"
                                     + "\n       syscall"
@@ -2087,50 +2178,38 @@ public class Main extends javax.swing.JFrame {
                         if (currentCuadruplo.getArgumento1().matches("[0-9]+")) {
                             codigoFinal += "       li $t" + t_izq + ", " + currentCuadruplo.getArgumento1() + "\n";
                         } else {
-                            if (isLocalVariable(currentCuadruplo.getArgumento1())) {
+                            if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
                                 if (isParameter(currentCuadruplo.getArgumento1(), codigoFinal)) {
                                     int par = getParamIndex(parametros, currentCuadruplo.getArgumento1());
                                     codigoFinal += "       move $t" + t_izq + ", $s" + par + "\n";
                                 } else {
-                                    if (isCharacterFunc(currentCuadruplo.getArgumento1())) {
+      
                                         codigoFinal += "       lw $t" + t_izq + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                        codigoFinal += "       lw $t" + t_izq + ", 0($t" + t_izq + ")\n";
-                                    } else {
-                                        codigoFinal += "       lw $t" + t_izq + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                    }
+                                    
                                 }
                             } else {
-                                if (isCharacterFunc(codigoFinal)) {
+        
                                     codigoFinal += "       lw $t" + t_izq + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                                    codigoFinal += "       lw $t" + t_izq + ", 0($f" + t_izq + ")\n";
-                                } else {
-                                    codigoFinal += "       lw $t" + t_izq + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                                }
+                                
                             }
                         }
                         if (currentCuadruplo.getArgumento2().matches("[0-9]+")) {
                             codigoFinal += "       li $t" + t_der + ", " + currentCuadruplo.getArgumento2() + "\n";
                         } else {
-                            if (isLocalVariable(currentCuadruplo.getArgumento2())) {
+                            if (isLocalVariable(currentCuadruplo.getArgumento2(), ambitos)) {
                                 if (isParameter(currentCuadruplo.getArgumento2(), codigoFinal)) {
                                     int par = getParamIndex(parametros, currentCuadruplo.getArgumento2());
                                     codigoFinal += "       move $t" + t_der + ", $s" + par + "\n";
                                 } else {
-                                    if (isCharacterFunc(currentCuadruplo.getArgumento2())) {
+                                   
                                         codigoFinal += "       lw $t" + t_der + ", -" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "($fp)\n";
-                                        codigoFinal += "       lw $t" + t_der + ", 0($t" + t_der + ")\n";
-                                    } else {
-                                        codigoFinal += "       lw $t" + t_der + ", -" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "($fp)\n";
-                                    }
+                                    
 
                                 }
                             } else {
-                                if (isCharacterFunc(currentCuadruplo.getArgumento2())) {
+                                
                                     codigoFinal += "       lw $t" + t_der + ", _" + currentCuadruplo.getArgumento2() + "\n";
-                                    codigoFinal += "       lw $t" + t_der + ", 0($t" + t_der + ")\n";
-                                } else {
-                                    codigoFinal += "       lw $t" + t_der + ", _" + currentCuadruplo.getArgumento2() + "\n";
-                                }
+                                
                             }
                         }
                         switch (op) {
@@ -2146,10 +2225,10 @@ public class Main extends javax.swing.JFrame {
                             case "<=":
                                 codigoFinal += "       ble $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
                                 break;
-                            case "==":
+                            case "=":
                                 codigoFinal += "       beq $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
                                 break;
-                            case "!=":
+                            case "/=":
                                 codigoFinal += "       bne $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
                                 break;
                             default:
@@ -2771,6 +2850,9 @@ public class Main extends javax.swing.JFrame {
     public static int semanticErrors = 0;
     public static int cont_temp = 0;
     public static int cont_etiq = 0;
+    
+    public static String ambito_siguiente = "";
+
     public static ArrayList<Cuadruplo> cuadruplo = new ArrayList<>();
 
 }
