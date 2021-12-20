@@ -2375,6 +2375,11 @@ public class Main extends javax.swing.JFrame {
                 }
                 case "declaración ciclo for": {
                     Node bodyFor = hijo.getHijo(1);
+                    String id = hijo.getHijo(0).getHijo(0).getHijo(0).valor;
+                    boolean error = ambito.agregarValor(id, new Valor(id, "TypeInteger"));
+                    if (!error) {
+                        Log("Error: Identificador %s ya declarado".formatted(id));
+                    }
                     checkBody(bodyFor, ambito, isFunction);
                     break;
                 }
