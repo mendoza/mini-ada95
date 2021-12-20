@@ -1562,9 +1562,13 @@ public class Main extends javax.swing.JFrame {
                     ambito_siguiente = node.getHijo(1).getVerdadero();
                     String finalTemp = intermedioAritmetica(node.getHijo(1), ambitos, true);
                     node.getHijo(1).setFalso(node.padre.getSiguiente());
+                    cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
+                    System.out.println("PADREEE: "+node.padre.getSiguiente() );
                     cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getVerdadero(), "", ""));
                     intermedio(node.getHijo(2));
                     cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
+                    cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getFalso(), "", ""));
+
                     break;
                 }
                 case "declaración ciclo while": {
@@ -1791,6 +1795,43 @@ public class Main extends javax.swing.JFrame {
         return !v.tipo.equals("");
     }
 
+    public static String devuelveTemp() {
+        // La pila de temporales ocupados contiene los valores de t# que fueron reservados para cargar alguna variable como registro
+        String popPilaTemp = "";
+        if (!tempOcupados.isEmpty()) {
+            popPilaTemp = tempOcupados.get(tempOcupados.size() - 1) + "";
+            tempOcupados.remove(tempOcupados.size() - 1);
+
+        }
+        return popPilaTemp;
+
+    }
+
+    public static String devuelveRes() {
+        // La pila matematica contiene los valores de t# que fueron reservados para guardar un resultado de una expresion 
+        String popPilaMat = "";
+        if (!pilaMatematica.isEmpty()) {
+            popPilaMat = pilaMatematica.get(pilaMatematica.size() - 1) + "";
+            pilaMatematica.remove(pilaMatematica.size() - 1);
+        }
+        return popPilaMat;
+    }
+
+    public static int auxDisponible() {
+        int aux =0 ;
+        Boolean encontro = false;
+        while (encontro == false) {
+            for (int i = 0; i < 7; i++) {
+                if (!tempOcupados.contains(i) && !pilaMatematica.contains(i)) {
+                    aux = i;
+                    encontro = true;
+                    break;
+                }
+            }
+        }
+        return aux;
+    }
+
     public static boolean isLocalVariable(String var, Ambitos ambito) {
 
         Object aux1 = ambito.TablaSimbolos.get(var);
@@ -1824,7 +1865,7 @@ public class Main extends javax.swing.JFrame {
     public static void codigoFinal() {
         ArrayList<Temporal> temporales = new ArrayList();
         ArrayList<Temporal> parametros = new ArrayList();
-        ArrayList<Integer> pilaMatematica = new ArrayList<>();
+
         int arg = 0;
         int contA = 0;
         for (int i = 0; i < 10; i++) {
@@ -2056,103 +2097,78 @@ public class Main extends javax.swing.JFrame {
                     break;
                 }
                 case "+": {
-                    int aux = 0;
-                    codigoFinal += (currentCuadruplo.argumento1.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento1);
-
-                    codigoFinal += (currentCuadruplo.argumento2.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento2);
-                    int diff = 0;
-                    if (pilaMatematica.contains(aux)) {
-                        diff = 1;
+                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
+                    if (!currentCuadruplo.argumento1.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        tempOcupados.add(aux);
                     }
-                    String temp1 = "";
 
-                    if (!pilaMatematica.isEmpty()) {
-                        temp1 = pilaMatematica.get(pilaMatematica.size() - 1) + "";
-                        pilaMatematica.remove(pilaMatematica.size() - 1);
+                    if (!currentCuadruplo.argumento2.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
+                        tempOcupados.add(aux);
                     }
-                    int diff2 = 0;
-                    if (aux == 0) {
-                        diff2 = 0;
-                    } else if (aux > 1) {
-
-                        diff2 = 1;
-                    }
-                    codigoFinal += "\n       add $t" + (aux + diff) + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? (aux - diff2 - 1) : temp1) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? aux - diff2 : temp1);
+                    
+                    int aux = auxDisponible();
+                    codigoFinal += "\n       add $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
                     pilaMatematica.add(aux);
                     break;
                 }
                 case "-": {
-                    int aux = 0;
+                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
+                    if (!currentCuadruplo.argumento1.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        tempOcupados.add(aux);
+                    }
 
-                    codigoFinal += (currentCuadruplo.argumento1.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento1);
-
-                    codigoFinal += (currentCuadruplo.argumento2.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento2);
-                    int diff = 0;
-                    if (pilaMatematica.contains(aux)) {
-                        diff = 1;
+                    if (!currentCuadruplo.argumento2.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
+                        tempOcupados.add(aux);
                     }
-                    String temp1 = "";
-                    if (!pilaMatematica.isEmpty()) {
-                        temp1 = pilaMatematica.get(pilaMatematica.size() - 1) + "";
-                        pilaMatematica.remove(pilaMatematica.size() - 1);
-                    }
-                    int diff2 = 0;
-                    if (aux == 0) {
-                        diff2 = 0;
-                    } else if (aux > 1) {
-                        diff2 = 1;
-                    }
-                    codigoFinal += "\n       sub $t" + (aux + diff) + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? (aux - diff2 - 1) : temp1) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? aux - diff2 : temp1);
+                    
+                    int aux = auxDisponible();
+                    codigoFinal += "\n       sub $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
                     pilaMatematica.add(aux);
                     break;
                 }
                 case "*": {
-                    int aux = 0;
+                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
+                    if (!currentCuadruplo.argumento1.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        tempOcupados.add(aux);
+                    }
 
-                    codigoFinal += (currentCuadruplo.argumento1.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento1);
-
-                    codigoFinal += (currentCuadruplo.argumento2.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento2);
-                    int diff = 0;
-                    if (pilaMatematica.contains(aux)) {
-                        diff = 1;
+                    if (!currentCuadruplo.argumento2.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
+                        tempOcupados.add(aux);
                     }
-                    String temp1 = "";
-                    if (!pilaMatematica.isEmpty()) {
-                        temp1 = pilaMatematica.get(pilaMatematica.size() - 1) + "";
-                        pilaMatematica.remove(pilaMatematica.size() - 1);
-                    }
-                    int diff2 = 0;
-                    if (aux == 0) {
-                        diff2 = 0;
-                    } else if (aux > 1) {
-                        diff2 = 1;
-                    }
-                    codigoFinal += "\n       mul $t" + (aux + diff) + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? (aux - diff2 - 1) : temp1) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? aux - diff2 : temp1);
+                    
+                    int aux = auxDisponible();
+                    codigoFinal += "\n       mul $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
                     pilaMatematica.add(aux);
                     break;
                 }
                 case "/": {
-                    int aux = 0;
+                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
+                    if (!currentCuadruplo.argumento1.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        tempOcupados.add(aux);
+                    }
 
-                    codigoFinal += (currentCuadruplo.argumento1.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento1);
-
-                    codigoFinal += (currentCuadruplo.argumento2.contains("#t") ? "" : "\n       li $t" + aux++ + ", " + currentCuadruplo.argumento2);
-                    int diff = 0;
-                    if (pilaMatematica.contains(aux)) {
-                        diff = 1;
+                    if (!currentCuadruplo.argumento2.contains("#t")) {
+                        int aux = auxDisponible();
+                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
+                        tempOcupados.add(aux);
                     }
-                    String temp1 = "";
-                    if (!pilaMatematica.isEmpty()) {
-                        temp1 = pilaMatematica.get(pilaMatematica.size() - 1) + "";
-                        pilaMatematica.remove(pilaMatematica.size() - 1);
-                    }
-                    int diff2 = 0;
-                    if (aux == 0) {
-                        diff2 = 0;
-                    } else if (aux > 1) {
-                        diff2 = 1;
-                    }
-                    codigoFinal += "\n       div $t" + (aux + diff) + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? (aux - diff2 - 1) : temp1) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? aux - diff2 : temp1);
+                    
+                    int aux = auxDisponible();
+                    codigoFinal += "\n       div $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
                     pilaMatematica.add(aux);
                     break;
                 }
@@ -2247,7 +2263,6 @@ public class Main extends javax.swing.JFrame {
 
             }
         }
-        System.out.println(pilaMatematica);
         jTextArea1.setText(codigoFinal);
     }
 
@@ -2857,6 +2872,9 @@ public class Main extends javax.swing.JFrame {
     public static int semanticErrors = 0;
     public static int cont_temp = 0;
     public static int cont_etiq = 0;
+
+    public static ArrayList<Integer> pilaMatematica = new ArrayList<>();
+    public static ArrayList<Integer> tempOcupados = new ArrayList<>();
 
     public static String ambito_siguiente = "";
 
