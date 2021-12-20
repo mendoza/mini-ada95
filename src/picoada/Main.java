@@ -2085,8 +2085,6 @@ public class Main extends javax.swing.JFrame {
                             case "/=":
                                 codigoFinal += "       bne $t" + t_izq + ", $t" + t_der + ", _" + currentCuadruplo.getResultado() + "\n";
                                 break;
-                            default:
-                                codigoFinal += "       nada\n";
                         }
                         temporales.get(t_izq).setVivo(false);
                         temporales.get(t_der).setVivo(false);
