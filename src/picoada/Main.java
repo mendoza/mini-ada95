@@ -79,6 +79,7 @@ public class Main extends javax.swing.JFrame {
         runButtonLabel = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
+        jLabel77 = new javax.swing.JLabel();
         panelEditorCodigo = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         editorCodigo = new javax.swing.JTextArea();
@@ -500,6 +501,9 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        jLabel77.setFont(new java.awt.Font("Andale Mono", 1, 14)); // NOI18N
+        jLabel77.setText("Marvin Estrada");
+
         javax.swing.GroupLayout TopBarLayout = new javax.swing.GroupLayout(TopBar);
         TopBar.setLayout(TopBarLayout);
         TopBarLayout.setHorizontalGroup(
@@ -513,7 +517,9 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(TopBarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, TopBarLayout.createSequentialGroup()
-                        .addComponent(jLabel13)
+                        .addGroup(TopBarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel77)
+                            .addComponent(jLabel13))
                         .addGap(12, 12, 12)))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel16)
@@ -522,7 +528,7 @@ public class Main extends javax.swing.JFrame {
         TopBarLayout.setVerticalGroup(
             TopBarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, TopBarLayout.createSequentialGroup()
-                .addContainerGap(20, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(FileIconPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(16, 16, 16))
             .addGroup(TopBarLayout.createSequentialGroup()
@@ -534,7 +540,9 @@ public class Main extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel13))
                     .addComponent(jLabel16))
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel77)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         panelEditorCodigo.setBackground(new java.awt.Color(255, 255, 255));
@@ -2695,6 +2703,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel74;
     private javax.swing.JLabel jLabel75;
     private javax.swing.JLabel jLabel76;
+    private javax.swing.JLabel jLabel77;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JList<String> jList1;
