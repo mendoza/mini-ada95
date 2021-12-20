@@ -1549,7 +1549,7 @@ public class Main extends javax.swing.JFrame {
                 case "BODY": {
                     node.setSiguiente(nuevaEtiqueta());
                     for (Node hijo : node.getHijos()) {
-                        if (hijo.getValor().equals("declaración ciclo for") || hijo.getValor().equals("declaración ciclo while")) {
+                        if (hijo.getValor().equals("declaración ciclo for") || hijo.getValor().equals("declaración ciclo while") || hijo.getValor().equals("declaración ciclo loop")) {
                             cuadruplo.add(new Cuadruplo("ETIQ", node.getSiguiente(), "", ""));
                             node.setSiguiente(nuevaEtiqueta());
                         }
@@ -1557,46 +1557,58 @@ public class Main extends javax.swing.JFrame {
                     }
                     break;
                 }
+                case "declaración elsif":
                 case "declaración if": {
                     node.getHijo(1).setVerdadero(nuevaEtiqueta());
                     ambito_siguiente = node.getHijo(1).getVerdadero();
                     String finalTemp = intermedioAritmetica(node.getHijo(1), ambitos, true);
                     node.getHijo(1).setFalso(node.padre.getSiguiente());
-                    cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
-                    System.out.println("PADREEE: "+node.padre.getSiguiente() );
+                    if (node.getHijos().size() == 4) {
+                        intermedio(node.getHijo(3));
+                    } else {
+                        cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
+                    }
                     cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getVerdadero(), "", ""));
                     intermedio(node.getHijo(2));
-                    cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
-                    cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getFalso(), "", ""));
-
+                    if (!node.valor.equals("declaración elsif")) {
+                        cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
+                        cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getFalso(), "", ""));
+                    }
+                    break;
+                }
+                case "else": {
+                    cuadruplo.add(new Cuadruplo("ETIQ", nuevaEtiqueta(), "", ""));
+                    intermedio(node.getHijo(0));
                     break;
                 }
                 case "declaración ciclo while": {
                     node.setComienzo(nuevaEtiqueta());
                     node.getHijo(1).setVerdadero(nuevaEtiqueta());
+                    ambito_siguiente = node.getHijo(1).getVerdadero();
                     node.getHijo(1).setFalso(node.padre.getSiguiente());
                     cuadruplo.add(new Cuadruplo("ETIQ", node.getComienzo(), "", ""));
                     String finalTemp = intermedioAritmetica(node.getHijo(1), ambitos, true);
-                    cuadruplo.add(new Cuadruplo("IF", finalTemp, "", node.getHijo(1).getVerdadero()));
+
+                    cuadruplo.add(new Cuadruplo("GOTO", node.getHijo(1).getFalso(), "", ""));
                     cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getVerdadero(), "", ""));
+
                     intermedio(node.getHijo(2));
                     cuadruplo.add(new Cuadruplo("GOTO", node.getComienzo(), "", ""));
+                    cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(1).getFalso(), "", ""));
+                    break;
+                }
+                case "Exit when": {
+                    node.getHijo(0).setFalso(node.padre.padre.padre.getSiguiente());
+                    ambito_siguiente = node.getHijo(0).getFalso();
+                    String finalTemp = intermedioAritmetica(node.getHijo(0), ambitos, true);
                     break;
                 }
                 case "declaración ciclo loop": {
                     node.setComienzo(nuevaEtiqueta());
-                    for (int i = 0; i < node.getHijo(0).getHijos().size(); i++) {
-                        if (node.getHijo(0).getHijo(i).valor.equals("exit when")) {
-                            node.getHijo(0).getHijo(i).getHijo(0).setVerdadero(nuevaEtiqueta());
-                            node.getHijo(0).getHijo(i).getHijo(0).setFalso(node.padre.getSiguiente());
-                            cuadruplo.add(new Cuadruplo("ETIQ", node.getComienzo(), "", ""));
-                            String finalTemp = intermedioAritmetica(node.getHijo(0).getHijo(i).getHijo(0), ambitos, true);
-                            cuadruplo.add(new Cuadruplo("IF", finalTemp, "", node.getHijo(0).getHijo(i).getHijo(0).getVerdadero()));
-                            cuadruplo.add(new Cuadruplo("ETIQ", node.getHijo(0).getHijo(i).getHijo(0).getVerdadero(), "", ""));
-                        }
-                    }
+                    cuadruplo.add(new Cuadruplo("ETIQ", node.getComienzo(), "", ""));
                     intermedio(node.getHijo(0));
                     cuadruplo.add(new Cuadruplo("GOTO", node.getComienzo(), "", ""));
+                    cuadruplo.add(new Cuadruplo("ETIQ", node.padre.getSiguiente(), "", ""));
                     break;
                 }
                 case "expresión for": {
@@ -1606,13 +1618,13 @@ public class Main extends javax.swing.JFrame {
                     // LA ASIGNACIÓN X = 0
                     String id = node.getHijo(0).getHijo(0).getValor();
                     String valor = node.getHijo(1).getHijo(0).getValor();
-                    cuadruplo.add(new Cuadruplo("=", valor, "", id));
+                    cuadruplo.add(new Cuadruplo(":=", valor, "", id));
                     // === 
                     cuadruplo.add(new Cuadruplo("ETIQ", node.padre.getComienzo(), "", ""));
                     // LA CONDICIÓN X < Z
                     String num = node.getHijo(2).getHijo(0).getValor();
-                    cuadruplo.add(new Cuadruplo("IF<", id, num, node.padre.getVerdadero()));
-                    cuadruplo.add(new Cuadruplo("GOTO", node.padre.getFalso(), "", ""));
+                    cuadruplo.add(new Cuadruplo("IF<=", id, num, node.padre.getVerdadero()));
+                    cuadruplo.add(new Cuadruplo("GOTO", node.padre.padre.getSiguiente(), "", ""));
                     // ===
                     String etiqueta = nuevaEtiqueta();
                     cuadruplo.add(new Cuadruplo("ETIQ", etiqueta, "", ""));
@@ -1625,6 +1637,7 @@ public class Main extends javax.swing.JFrame {
                     cuadruplo.add(new Cuadruplo("ETIQ", node.padre.getVerdadero(), "", ""));
                     intermedio(node.padre.getHijo(1));
                     cuadruplo.add(new Cuadruplo("GOTO", etiqueta, "", ""));
+                    cuadruplo.add(new Cuadruplo("ETIQ", node.padre.padre.getSiguiente(), "", ""));
                     break;
                 }
                 case "declaración ciclo for": {
@@ -1818,7 +1831,7 @@ public class Main extends javax.swing.JFrame {
     }
 
     public static int auxDisponible() {
-        int aux =0 ;
+        int aux = 0;
         Boolean encontro = false;
         while (encontro == false) {
             for (int i = 0; i < 7; i++) {
@@ -1832,21 +1845,19 @@ public class Main extends javax.swing.JFrame {
         return aux;
     }
 
-    public static boolean isLocalVariable(String var, Ambitos ambito) {
-
+    public static boolean isVariable(String var, Ambitos ambito) {
         Object aux1 = ambito.TablaSimbolos.get(var);
 
-        if (aux1 != null && ambito.NombreAmbito.equals(ambito_siguiente)) {
+        if (aux1 != null) {
             return true;
         }
 
         for (Ambitos a : ambito.getHijos()) {
             Object aux = a.TablaSimbolos.get(var);
-
-            if (aux != null && a.NombreAmbito.equals(ambito_siguiente)) {
+            if (aux != null) {
                 return true;
             } else {
-                return isLocalVariable(var, a);
+                return isVariable(var, a);
             }
         }
         return false;
@@ -1873,14 +1884,13 @@ public class Main extends javax.swing.JFrame {
         }
         String codigoFinal = "";
         codigoFinal += ".data\n";
-
+        codigoFinal += " newline: .asciiz \"\\n\"\n";
         codigoFinal += "   .text\n"
                 + "   .globl main\n";
 
         for (Cuadruplo currentCuadruplo : cuadruplo) {
             switch (currentCuadruplo.getOperador()) {
-                case "Proc":
-                case "Func": {
+                case "Proc": {
                     ambito_siguiente = currentCuadruplo.getArgumento1();
                     parametros.clear();
                     if (currentCuadruplo.getArgumento1().equals("start")) {
@@ -1911,145 +1921,11 @@ public class Main extends javax.swing.JFrame {
                     }
                     break;
                 }
-                case "Param": {
-
-                    if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
-                        int par = getParamIndex(ambito_siguiente, currentCuadruplo.getArgumento1());
-                        if (isParameter(currentCuadruplo.getArgumento1(), ambito_siguiente)) {
-                            if (arg >= 4) {
-                                if (parametros.get(par).equals("TypeBoolean")) {
-                                    contA += 1;
-                                    codigoFinal += "       sb $s" + par + ", -" + contA + "($sp)\n";
-                                } else {
-                                    contA += 4;
-                                    codigoFinal += "       sw $s" + par + ", -" + contA + "($sp)\n";
-                                }
-                            } else {
-                                codigoFinal += "       move $a" + arg + ", $s" + par + "($sp)\n";
-                            }
-                        } else {
-                            int temp = 0;
-                            for (int i = 0; i < temporales.size(); i++) {
-                                if (!temporales.get(i).isVivo()) {
-                                    temp = i;
-                                    break;
-                                }
-                            }
-                            if (arg >= 4) {
-                                contA += 4;
-                                codigoFinal += "       lw $t" + temp + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                                codigoFinal += "       sw $t" + temp + ", -" + contA + "($sp)\n";
-                            } else {
-                                codigoFinal += "       lw $a" + arg + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                            }
-                        }
-                    } else {
-                        if (arg >= 4) {
-                            int t = 0;
-                            for (int i = 0; i < temporales.size(); i++) {
-                                if (!temporales.get(i).isVivo()) {
-                                    t = i;
-                                    break;
-                                }
-                            }
-                            contA += 4;
-                            codigoFinal += "       lw $t" + t + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                            codigoFinal += "       sw $t" + t + ", -" + contA + "($sp)\n";
-
-                        } else {
-                            codigoFinal += "       lw $a" + arg + ", _" + currentCuadruplo.getArgumento1() + "\n";
-                        }
-                    }
-
-                    arg++;
-                    break;
-                }
-                case "Ret": {
-                    if (!ambito_siguiente.equals("main")) {
-                        if (currentCuadruplo.getArgumento1().contains("'") || currentCuadruplo.getArgumento1().matches("[0-9]+")) {
-                            codigoFinal += "       li $v0, " + currentCuadruplo.getArgumento1() + "\n";
-                        } else if (currentCuadruplo.getArgumento1().contains("#t")) {
-                            int tempRet = 0;
-                            for (int i = 0; i < temporales.size(); i++) {
-                                if (temporales.get(i).isVivo() && temporales.get(i).getActivado().equals(currentCuadruplo.getArgumento1())) {
-                                    tempRet = i;
-                                }
-                            }
-                            temporales.get(tempRet).setVivo(false);
-                            temporales.get(tempRet).setActivado("");
-                            codigoFinal += "       move $v0, $t" + tempRet + "\n";
-                        } else {
-                            if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
-                                if (isParameter(currentCuadruplo.getArgumento1(), ambito_siguiente)) {
-                                    codigoFinal += "       move $v0, $s" + getParamIndex(ambito_siguiente, currentCuadruplo.getArgumento1()) + "\n";
-                                } else {
-
-                                    codigoFinal += "       lw $v0, -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-
-                                }
-                            } else {
-                                int tempRet = 0;
-                                for (int i = 0; i < temporales.size(); i++) {
-                                    if (!temporales.get(i).isVivo()) {
-                                        tempRet = i;
-                                        break;
-                                    }
-                                }
-                                codigoFinal += "       lw $v0, _" + currentCuadruplo.getArgumento1() + "\n";
-                            }
-                        }
-                        codigoFinal += "       b _fin_" + ambito_siguiente + "\n";
-                    }
-                    break;
-                }
                 case "ProcEnd": {
                     if (ambito_siguiente.equals("start")) {
                         codigoFinal += "\n       li $v0,10\n"
                                 + "       syscall\n";
                     }
-                    break;
-                }
-                case "FuncEnd": {
-                    codigoFinal += "_fin_" + ambito_siguiente + ":\n"
-                            + "       move $sp, $fp\n"
-                            + "       lw $fp, -4($sp)\n"
-                            + "       lw $ra, -8($sp)\n";
-                    int contE = 0;
-                    Funcion fun = getFuncion(ambito_siguiente, ambitos);
-                    int paramsE = fun.getParams().size();
-                    if (paramsE > 4) {
-                        for (int i = 4; i < fun.getParams().size(); i++) {
-                            if (fun.getParams().get(i).equals("TypeBoolean")) {
-                                codigoFinal += "       lb $s" + contE + ", -" + 1 + "($sp)\n";
-                            } else {
-                                codigoFinal += "       lw $s" + contE + ", -" + 4 + "($sp)\n";
-                            }
-                            contE++;
-                        }
-                    }
-                    codigoFinal += "       jr $ra\n";
-                    break;
-                }
-                case "Call": {
-                    int contadorVivos = 0;
-                    for (int i = 0; i < parametros.size(); i++) {
-                        if (parametros.get(i).isVivo()) {
-                            contadorVivos += 4;
-                            codigoFinal += "       sw $t" + i + ",-" + contadorVivos + "($sp)\n";
-                        }
-                    }
-                    if (contadorVivos > 0) {
-                        codigoFinal += "       sub $sp, $sp, " + contadorVivos + "\n";
-                    }
-                    codigoFinal += "       jal _" + currentCuadruplo.getArgumento1() + "\n";
-                    for (int i = parametros.size() - 1; i >= 0; i--) {
-                        if (parametros.get(i).isVivo()) {
-                            codigoFinal += "       lw $t" + i + ",0($sp)\n"
-                                    + "       add $sp,$sp,4\n";
-                        }
-                    }
-                    arg = 0;
-                    contA = 0;
                     break;
                 }
                 case "ETIQ": {
@@ -2067,13 +1943,19 @@ public class Main extends javax.swing.JFrame {
                     Valor aux = getVar(var, ambitos);
                     if (aux != null && (aux.type.equals("TypeInteger") || aux.type.equals("TypeFloat"))) {
                         codigoFinal += " 1"
-                                + "\n       li $a0, " + currentCuadruplo.getArgumento1()
-                                + "\n       syscall";
+                                + "\n       move $a0, $s" + getOffsetVariable(currentCuadruplo.getArgumento1())
+                                + "\n       syscall\n";
 
                     } else if (aux != null && aux.type.equals("TypeBoolean")) {  // En caso de que sea un booleano
                         codigoFinal += " 1"
-                                + "\n       lw $a0, " + currentCuadruplo.getArgumento1()
-                                + "\n       syscall";
+                                + "\n       move $a0, $s" + getOffsetVariable(currentCuadruplo.getArgumento1())
+                                + "\n       syscall\n";
+                    }
+                    if (currentCuadruplo.operador.equals("PUT_LINE")) {
+                        codigoFinal
+                                += "       li $v0, 4\n"
+                                + "       la $a0, newline\n"
+                                + "       syscall\n";
                     }
                     break;
                 }
@@ -2084,91 +1966,51 @@ public class Main extends javax.swing.JFrame {
                     String var = currentCuadruplo.getArgumento1();
                     Valor aux1 = getVar(var, ambitos);
                     if (aux1 != null) { // Ver si la variable es global
-                        if (tipo.equals("entero")) {
+                        if (aux1.type.equals("TypeInteger")) {
                             codigoFinal += " 1"
                                     + "\n       syscall"
-                                    + "\n       sw $v0, _" + currentCuadruplo.getArgumento1() + "\n";
-                        } else if (tipo.equals("caracter")) {
-                            codigoFinal += " 12"
-                                    + "\n       syscall"
-                                    + "\n       sw $v0, _" + currentCuadruplo.getArgumento1();
+                                    + "\n       move $s" + getOffsetVariable(currentCuadruplo.getArgumento1()) + ", $v0" + "\n";
                         }
                     }
                     break;
                 }
+                case "-":
+                case "*":
+                case "/":
                 case "+": {
                     // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
                     if (!currentCuadruplo.argumento1.contains("#t")) {
                         int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        if (isVariable(currentCuadruplo.argumento1, ambitos)) {
+                            codigoFinal += "\n       move $t" + aux + ", " + "$s" + getOffsetVariable(currentCuadruplo.argumento1);
+                        } else {
+                            codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        }
                         tempOcupados.add(aux);
                     }
 
                     if (!currentCuadruplo.argumento2.contains("#t")) {
                         int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
-                        tempOcupados.add(aux);
-                    }
-                    
-                    int aux = auxDisponible();
-                    codigoFinal += "\n       add $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
-                    pilaMatematica.add(aux);
-                    break;
-                }
-                case "-": {
-                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
-                    if (!currentCuadruplo.argumento1.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
+                        if (isVariable(currentCuadruplo.argumento2, ambitos)) {
+                            codigoFinal += "\n       move $t" + aux + ", " + "$s" + getOffsetVariable(currentCuadruplo.argumento2);
+                        } else {
+                            codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
+                        }
                         tempOcupados.add(aux);
                     }
 
-                    if (!currentCuadruplo.argumento2.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
-                        tempOcupados.add(aux);
-                    }
-                    
                     int aux = auxDisponible();
-                    codigoFinal += "\n       sub $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
-                    pilaMatematica.add(aux);
-                    break;
-                }
-                case "*": {
-                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
-                    if (!currentCuadruplo.argumento1.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
-                        tempOcupados.add(aux);
+                    String op = "";
+                    if (currentCuadruplo.operador.equals("+")) {
+                        op = "add";
+                    } else if (currentCuadruplo.operador.equals("-")) {
+                        op = "sub";
+                    } else if (currentCuadruplo.operador.equals("/")) {
+                        op = "div";
+                    } else if (currentCuadruplo.operador.equals("*")) {
+                        op = "mul";
                     }
-
-                    if (!currentCuadruplo.argumento2.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
-                        tempOcupados.add(aux);
-                    }
-                    
-                    int aux = auxDisponible();
-                    codigoFinal += "\n       mul $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
-                    pilaMatematica.add(aux);
-                    break;
-                }
-                case "/": {
-                    // Si el argumento del codigo intermedio, contiene temporales, no se hace un lw para pasarlo a registro
-                    if (!currentCuadruplo.argumento1.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento1;
-                        tempOcupados.add(aux);
-                    }
-
-                    if (!currentCuadruplo.argumento2.contains("#t")) {
-                        int aux = auxDisponible();
-                        codigoFinal += "\n       li $t" + aux + ", " + currentCuadruplo.argumento2;
-                        tempOcupados.add(aux);
-                    }
-                    
-                    int aux = auxDisponible();
-                    codigoFinal += "\n       div $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
+                    codigoFinal += "\n       " + op + " $t" + aux + ", $t" + (!currentCuadruplo.argumento1.contains("#t") ? devuelveTemp() : devuelveRes()) + ", $t" + (!currentCuadruplo.argumento2.contains("#t") ? devuelveTemp() : devuelveRes());
                     pilaMatematica.add(aux);
                     break;
                 }
@@ -2181,10 +2023,10 @@ public class Main extends javax.swing.JFrame {
                             int temp = pilaMatematica.get(pilaMatematica.size() - 1);
                             pilaMatematica.remove(pilaMatematica.size() - 1);
                             codigoFinal += ""
-                                    + "\n       move $s" + aux.offset + ", $t" + temp;
+                                    + "\n       move $s" + aux.offset + ", $t" + temp + "\n";
                         } else {
                             codigoFinal += ""
-                                    + "\n       li $s" + aux.offset + ", " + val;
+                                    + "\n       li $s" + aux.offset + ", " + val + "\n";
                         }
                     } else if (aux != null && aux.type.equals("TypeBoolean")) {  // En caso de que sea un booleano
                         codigoFinal += ""
@@ -2211,28 +2053,17 @@ public class Main extends javax.swing.JFrame {
                                 break;
                             }
                         }
-
-                        if (isLocalVariable(currentCuadruplo.getArgumento1(), ambitos)) {
-                            if (isParameter(currentCuadruplo.getArgumento1(), codigoFinal)) {
-                                int par = getParamIndex(ambito_siguiente, currentCuadruplo.getArgumento1());
-                                codigoFinal += "\n       move $t" + t_izq + ", $s" + par + "\n";
-                            } else {
-                                codigoFinal += "\n       lw $t" + t_izq + ", -" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "($fp)\n";
-                            }
+                        if (isVariable(currentCuadruplo.getArgumento1(), ambitos)) {
+                            codigoFinal += "\n       move $t" + t_izq + ", $s" + getOffsetVariable(currentCuadruplo.getArgumento1()) + "\n";
                         } else {
-                            codigoFinal += "\n       lw $t" + t_izq + ", _" + currentCuadruplo.getArgumento1() + "\n";
+                            codigoFinal += "\n       li $t" + t_izq + ", " + currentCuadruplo.getArgumento1() + "\n";
 
                         }
 
-                        if (isLocalVariable(currentCuadruplo.getArgumento2(), ambitos)) {
-                            if (isParameter(currentCuadruplo.getArgumento2(), codigoFinal)) {
-                                int par = getParamIndex(ambito_siguiente, currentCuadruplo.getArgumento2());
-                                codigoFinal += "\n       move $t" + t_der + ", $s" + par + "\n";
-                            } else {
-                                codigoFinal += "\n       lw $t" + t_der + ", -" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "($fp)\n";
-                            }
+                        if (isVariable(currentCuadruplo.getArgumento2(), ambitos)) {
+                            codigoFinal += "\n       move $t" + t_der + ", $s" + getOffsetVariable(currentCuadruplo.getArgumento2()) + "\n";
                         } else {
-                            codigoFinal += "\n       lw $t" + t_der + ", _" + currentCuadruplo.getArgumento2() + "\n";
+                            codigoFinal += "\n       li $t" + t_der + ", " + currentCuadruplo.getArgumento2() + "\n";
 
                         }
                         switch (op) {
