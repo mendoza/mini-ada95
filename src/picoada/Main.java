@@ -2095,6 +2095,25 @@ public class Main extends javax.swing.JFrame {
             }
         }
         jTextArea1.setText(codigoFinal);
+        guardarArchivo(codigoFinal);
+    }
+
+    public static void guardarArchivo(String codigoFinal) {
+        FileWriter fichero2 = null;
+        PrintWriter pw = null;
+        try {
+            fichero2 = new FileWriter("./ada95.asm");
+            pw = new PrintWriter(fichero2);
+            pw.print(codigoFinal);
+        } catch (IOException e) {
+        }
+
+        try {
+            if (null != fichero2) {
+                fichero2.close();
+            }
+        } catch (IOException e2) {
+        }
     }
 
     private void addAllIds(Node arbol, Ambitos ambito) {
