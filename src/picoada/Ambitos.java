@@ -38,7 +38,7 @@ public class Ambitos {
             cur_offset = 1;
         }
         this.offset += cur_offset;
-        value.offset = cur_offset;
+        value.offset = this.offset;
         if (this.TablaSimbolos.get(key) == null) {
             this.TablaSimbolos.put(key, value);
             return true;
